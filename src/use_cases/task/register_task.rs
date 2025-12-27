@@ -1,0 +1,98 @@
+use crate::domain::task::task::Task;
+use crate::domain::task::task_description::TaskDescription;
+use crate::domain::task::task_id::TaskId;
+use crate::domain::task::task_repository::TaskRepository;
+use crate::domain::task::task_status::TaskStatus;
+use crate::domain::task::task_title::TaskTitle;
+use crate::repositories::task::task_in_memory_repository::TaskInMemoryRepository;
+use crate::use_cases::task::register_task_command::RegisterTaskCommand;
+use crate::use_cases::task::register_task_result::RegisterTaskResult;
+
+#[derive(Debug, Eq, PartialEq)]
+pub enum ResisterTaskError {
+    InvalidTitle,
+    InvalidDescription,
+    RepositoryError,
+}
+
+#[derive(Debug)]
+pub struct RegisterTask<'a, T: TaskRepository> {
+    repository: &'a mut T,
+}
+
+impl<'a, T: TaskRepository> RegisterTask<'a, T> {
+    pub fn new(repository: &'a mut T) -> Self {
+        Self { repository }
+    }
+
+    pub fn execute(
+        &mut self,
+        command: RegisterTaskCommand,
+    ) -> Result<RegisterTaskResult, ResisterTaskError> {
+        let id = TaskId::new();
+        let title = match TaskTitle::try_from(command.title()) {
+            Ok(title) => title,
+            Err(_) => return Err(ResisterTaskError::InvalidTitle),
+        };
+        let description = match TaskDescription::try_from(command.description()) {
+            Ok(description) => description,
+            Err(_) => return Err(ResisterTaskError::InvalidDescription),
+        };
+
+        let task = Task::new(id, title, description, TaskStatus::Todo);
+        let task = match self.repository.register(task) {
+            Ok(task) => task,
+            Err(_) => return Err(ResisterTaskError::RepositoryError),
+        };
+
+        Ok(RegisterTaskResult::from(task))
+    }
+}
+
+#[test]
+fn execute_when_valid_input_then_returns_registered_task() {
+    let mut repository = TaskInMemoryRepository::new();
+    let mut register_task = RegisterTask::new(&mut repository);
+    let command = RegisterTaskCommand::new("Task Title", "Task Description");
+    let result = register_task.execute(command).ok().unwrap();
+    assert_eq!(result.title, "Task Title");
+    assert_eq!(result.description, "Task Description");
+}
+
+#[test]
+fn execute_when_task_title_is_empty_then_returns_error() {
+    let mut repository = TaskInMemoryRepository::new();
+    let mut register_task = RegisterTask::new(&mut repository);
+    let command = RegisterTaskCommand::new("", "Task Description");
+    let result = register_task.execute(command).err().unwrap();
+    assert_eq!(result, ResisterTaskError::InvalidTitle);
+}
+
+#[test]
+fn execute_when_task_title_is_too_long_then_returns_error() {
+    let mut repository = TaskInMemoryRepository::new();
+    let mut register_task = RegisterTask::new(&mut repository);
+    let task_title = String::from("A").repeat(65);
+    let command = RegisterTaskCommand::new(task_title.as_str(), "Task Description");
+    let result = register_task.execute(command).err().unwrap();
+    assert_eq!(result, ResisterTaskError::InvalidTitle);
+}
+
+#[test]
+fn execute_when_task_description_is_empty_then_returns_error() {
+    let mut repository = TaskInMemoryRepository::new();
+    let mut register_task = RegisterTask::new(&mut repository);
+    let command = RegisterTaskCommand::new("Task Title", "");
+    let result = register_task.execute(command).err().unwrap();
+    assert_eq!(result, ResisterTaskError::InvalidDescription);
+}
+
+#[test]
+fn execute_when_task_description_is_too_long_then_returns_error() {
+    let mut repository = TaskInMemoryRepository::new();
+    let mut register_task = RegisterTask::new(&mut repository);
+    let task_description = String::from("A").repeat(257);
+    let command = RegisterTaskCommand::new("Task Title", task_description.as_str());
+    let result = register_task.execute(command).err().unwrap();
+    assert_eq!(result, ResisterTaskError::InvalidDescription);
+}
