@@ -1,8 +1,8 @@
 use crate::domain::task::task_repository::TaskRepository;
 use crate::use_cases::task::register_task::{RegisterTask, ResisterTaskError};
 use crate::use_cases::task::register_task_command::RegisterTaskCommand;
-use http::{Request, Response, StatusCode};
 use serde::{Deserialize, Serialize};
+use tiny_http::{Request, Response, StatusCode};
 
 #[derive(Serialize, Deserialize)]
 struct TaskPostInput {
@@ -28,14 +28,18 @@ impl<T: TaskRepository> TaskController<T> {
         Self { repository }
     }
 
-    pub fn post(&mut self, request: Request<String>) -> Response<String> {
-        let payload: TaskPostInput = match serde_json::from_str(request.body()) {
+    pub fn post(
+        &mut self,
+        http_request: &mut Request,
+    ) -> Response<std::io::Cursor<Vec<u8>>> {
+        let mut body = String::new();
+        http_request.as_reader().read_to_string(&mut body).unwrap();
+
+        let payload: TaskPostInput = match serde_json::from_str(body.as_str()) {
             Ok(payload) => payload,
             Err(_) => {
-                return Response::builder()
-                    .status(StatusCode::BAD_REQUEST)
-                    .body(String::from("Invalid request body"))
-                    .unwrap();
+                return Response::from_string(String::from("Invalid request body"))
+                    .with_status_code(StatusCode::from(400));
             }
         };
 
@@ -46,18 +50,18 @@ impl<T: TaskRepository> TaskController<T> {
             Ok(result) => result,
             Err(ref e) => {
                 return match e {
-                    ResisterTaskError::InvalidTitle => Response::builder()
-                        .status(StatusCode::BAD_REQUEST)
-                        .body(String::from("Invalid task title input"))
-                        .unwrap(),
-                    ResisterTaskError::InvalidDescription => Response::builder()
-                        .status(StatusCode::BAD_REQUEST)
-                        .body(String::from("Invalid task description input"))
-                        .unwrap(),
-                    ResisterTaskError::RepositoryError => Response::builder()
-                        .status(StatusCode::INTERNAL_SERVER_ERROR)
-                        .body(String::from("Error occurred during saving task"))
-                        .unwrap(),
+                    ResisterTaskError::InvalidTitle => {
+                        Response::from_string(String::from("Invalid task title input"))
+                            .with_status_code(StatusCode::from(400))
+                    }
+                    ResisterTaskError::InvalidDescription => {
+                        Response::from_string(String::from("Invalid task description input"))
+                            .with_status_code(StatusCode::from(400))
+                    }
+                    ResisterTaskError::RepositoryError => {
+                        Response::from_string(String::from("Error occurred during saving task"))
+                            .with_status_code(StatusCode::from(500))
+                    }
                 };
             }
         };
@@ -68,9 +72,6 @@ impl<T: TaskRepository> TaskController<T> {
             description: result.description,
             status: result.status,
         };
-        Response::builder()
-            .status(StatusCode::OK)
-            .body(serde_json::to_string(&payload).unwrap())
-            .unwrap()
+        Response::from_string(serde_json::to_string(&payload).unwrap()).with_status_code(200)
     }
 }
