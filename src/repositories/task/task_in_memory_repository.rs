@@ -33,13 +33,6 @@ impl TaskRepository for TaskInMemoryRepository {
         }
     }
 
-    fn get_by_id_mut(&mut self, id: &TaskId) -> Result<&mut Task, TaskRepositoryError> {
-        match self.data.get_mut(&id) {
-            Some(task) => Ok(task),
-            None => Err(TaskRepositoryError::NotFound),
-        }
-    }
-
     fn register(&mut self, task: Task) -> Result<&Task, TaskRepositoryError> {
         let id = task.id.clone();
         if !self.data.contains_key(&task.id) {
