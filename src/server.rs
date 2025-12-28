@@ -24,7 +24,7 @@ impl Server {
             };
 
             match (request.url(), request.method()) {
-                ("/tasks", Method::Post) => {
+                ("/api/v1/tasks", Method::Post) => {
                     let repository = TaskInMemoryRepository::new();
                     let mut controller = TaskController::new(repository);
                     let response = controller.post(&mut request);
