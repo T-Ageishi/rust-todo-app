@@ -30,10 +30,10 @@ impl<T: TaskRepository> TaskController<T> {
 
     pub fn post(
         &mut self,
-        http_request: &mut Request,
+        request: &mut Request,
     ) -> Response<std::io::Cursor<Vec<u8>>> {
         let mut body = String::new();
-        http_request.as_reader().read_to_string(&mut body).unwrap();
+        request.as_reader().read_to_string(&mut body).unwrap();
 
         let payload: TaskPostInput = match serde_json::from_str(body.as_str()) {
             Ok(payload) => payload,
