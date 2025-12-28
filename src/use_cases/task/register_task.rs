@@ -9,7 +9,7 @@ use crate::use_cases::task::register_task_command::RegisterTaskCommand;
 use crate::use_cases::task::register_task_result::RegisterTaskResult;
 
 #[derive(Debug, Eq, PartialEq)]
-pub enum ResisterTaskError {
+pub enum RegisterTaskError {
     InvalidTitle,
     InvalidDescription,
     RepositoryError,
@@ -28,21 +28,21 @@ impl<'a, T: TaskRepository> RegisterTask<'a, T> {
     pub fn execute(
         &mut self,
         command: RegisterTaskCommand,
-    ) -> Result<RegisterTaskResult, ResisterTaskError> {
+    ) -> Result<RegisterTaskResult, RegisterTaskError> {
         let id = TaskId::new();
         let title = match TaskTitle::try_from(command.title()) {
             Ok(title) => title,
-            Err(_) => return Err(ResisterTaskError::InvalidTitle),
+            Err(_) => return Err(RegisterTaskError::InvalidTitle),
         };
         let description = match TaskDescription::try_from(command.description()) {
             Ok(description) => description,
-            Err(_) => return Err(ResisterTaskError::InvalidDescription),
+            Err(_) => return Err(RegisterTaskError::InvalidDescription),
         };
 
         let task = Task::new(id, title, description, TaskStatus::Todo);
         let task = match self.repository.register(task) {
             Ok(task) => task,
-            Err(_) => return Err(ResisterTaskError::RepositoryError),
+            Err(_) => return Err(RegisterTaskError::RepositoryError),
         };
 
         Ok(RegisterTaskResult::from(task))
@@ -65,7 +65,7 @@ fn execute_when_task_title_is_empty_then_returns_error() {
     let mut register_task = RegisterTask::new(&mut repository);
     let command = RegisterTaskCommand::new("", "Task Description");
     let result = register_task.execute(command).err().unwrap();
-    assert_eq!(result, ResisterTaskError::InvalidTitle);
+    assert_eq!(result, RegisterTaskError::InvalidTitle);
 }
 
 #[test]
@@ -75,7 +75,7 @@ fn execute_when_task_title_is_too_long_then_returns_error() {
     let task_title = String::from("A").repeat(65);
     let command = RegisterTaskCommand::new(task_title.as_str(), "Task Description");
     let result = register_task.execute(command).err().unwrap();
-    assert_eq!(result, ResisterTaskError::InvalidTitle);
+    assert_eq!(result, RegisterTaskError::InvalidTitle);
 }
 
 #[test]
@@ -84,7 +84,7 @@ fn execute_when_task_description_is_empty_then_returns_error() {
     let mut register_task = RegisterTask::new(&mut repository);
     let command = RegisterTaskCommand::new("Task Title", "");
     let result = register_task.execute(command).err().unwrap();
-    assert_eq!(result, ResisterTaskError::InvalidDescription);
+    assert_eq!(result, RegisterTaskError::InvalidDescription);
 }
 
 #[test]
@@ -94,5 +94,5 @@ fn execute_when_task_description_is_too_long_then_returns_error() {
     let task_description = String::from("A").repeat(257);
     let command = RegisterTaskCommand::new("Task Title", task_description.as_str());
     let result = register_task.execute(command).err().unwrap();
-    assert_eq!(result, ResisterTaskError::InvalidDescription);
+    assert_eq!(result, RegisterTaskError::InvalidDescription);
 }

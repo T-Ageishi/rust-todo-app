@@ -1,6 +1,6 @@
 use crate::domain::task::task::Task;
 use crate::domain::task::task_repository::TaskRepository;
-use crate::use_cases::task::register_task::{RegisterTask, ResisterTaskError};
+use crate::use_cases::task::register_task::{RegisterTask, RegisterTaskError};
 use crate::use_cases::task::register_task_command::RegisterTaskCommand;
 use serde::{Deserialize, Serialize};
 use tiny_http::{Request, Response, StatusCode};
@@ -81,15 +81,15 @@ impl<'a, T: TaskRepository> TaskController<'a, T> {
             Ok(result) => result,
             Err(ref e) => {
                 return match e {
-                    ResisterTaskError::InvalidTitle => {
+                    RegisterTaskError::InvalidTitle => {
                         Response::from_string(String::from("Invalid task title input"))
                             .with_status_code(StatusCode::from(400))
                     }
-                    ResisterTaskError::InvalidDescription => {
+                    RegisterTaskError::InvalidDescription => {
                         Response::from_string(String::from("Invalid task description input"))
                             .with_status_code(StatusCode::from(400))
                     }
-                    ResisterTaskError::RepositoryError => {
+                    RegisterTaskError::RepositoryError => {
                         Response::from_string(String::from("Error occurred during saving task"))
                             .with_status_code(StatusCode::from(500))
                     }
