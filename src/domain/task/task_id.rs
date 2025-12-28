@@ -42,7 +42,7 @@ impl TaskId {
 #[test]
 fn try_from_when_valid_uuid_then_returns_instance() {
     let uuid = Uuid::new_v4();
-    let task_id = TaskId::try_from(uuid.to_string().as_str()).unwrap();
+    let task_id = TaskId::from(uuid);
     assert_eq!(task_id.value, uuid);
 }
 #[test]
