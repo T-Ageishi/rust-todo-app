@@ -24,4 +24,25 @@ impl Task {
             status,
         }
     }
+
+    pub fn change_title(self, title: TaskTitle) -> Self {
+        Self {
+            title,
+            ..self
+        }
+    }
+
+    pub fn change_description(self, description: TaskDescription) -> Self {
+        Self {
+            description,
+            ..self
+        }
+    }
+
+    pub fn change_status(self, status: TaskStatus) -> Self {
+        Self {
+            status,
+            ..self
+        }
+    }
 }
