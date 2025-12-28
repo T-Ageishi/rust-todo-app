@@ -2,7 +2,7 @@ use uuid::Uuid;
 
 #[derive(Debug)]
 pub enum UpdateTaskCommandError {
-    InvalidTaskId,
+    InvalidFormatTaskID,
 }
 
 #[derive(Debug)]
@@ -22,7 +22,7 @@ impl UpdateTaskCommand {
     ) -> Result<UpdateTaskCommand, UpdateTaskCommandError> {
         let id = match Uuid::parse_str(id) {
             Ok(id) => id,
-            Err(_) => return Err(UpdateTaskCommandError::InvalidTaskId),
+            Err(_) => return Err(UpdateTaskCommandError::InvalidFormatTaskID),
         };
 
         Ok(UpdateTaskCommand {
