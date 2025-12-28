@@ -1,3 +1,4 @@
+use crate::domain::task::task::Task;
 use crate::domain::task::task_repository::TaskRepository;
 use crate::use_cases::task::register_task::{RegisterTask, ResisterTaskError};
 use crate::use_cases::task::register_task_command::RegisterTaskCommand;
@@ -5,11 +6,20 @@ use serde::{Deserialize, Serialize};
 use tiny_http::{Request, Response, StatusCode};
 
 #[derive(Serialize, Deserialize)]
+struct TaskDTO {
+    id: String,
+    title: String,
+    description: String,
+    status: i32,
+}
+
+#[derive(Serialize, Deserialize)]
 struct TaskPostInput {
     title: String,
     description: String,
     status: i32,
 }
+//TODO: fix structure
 #[derive(Serialize, Deserialize)]
 struct TaskPostOutput {
     id: String,
@@ -18,20 +28,45 @@ struct TaskPostOutput {
     status: i32,
 }
 
-#[derive(Debug)]
-pub struct TaskController<T: TaskRepository> {
-    repository: T,
+#[derive(Serialize, Deserialize)]
+struct TaskListOutput {
+    data: Vec<TaskDTO>,
+}
+impl TaskListOutput {
+    fn from(task_list: &Vec<&Task>) -> Self {
+        let mut list = Vec::new();
+        for task in task_list {
+            list.push(TaskDTO {
+                id: task.id.to_string(),
+                title: task.title.to_string(),
+                description: task.description.to_string(),
+                status: task.status.to_int(),
+            })
+        }
+
+        Self { data: list }
+    }
 }
 
-impl<T: TaskRepository> TaskController<T> {
-    pub fn new(repository: T) -> Self {
+#[derive(Debug)]
+pub struct TaskController<'a, T: TaskRepository> {
+    repository: &'a mut T,
+}
+
+impl<'a, T: TaskRepository> TaskController<'a, T> {
+    pub fn new(repository: &'a mut T) -> Self {
         Self { repository }
     }
 
-    pub fn post(
-        &mut self,
-        request: &mut Request,
-    ) -> Response<std::io::Cursor<Vec<u8>>> {
+    pub fn get(&self) -> Response<std::io::Cursor<Vec<u8>>> {
+        let tasks = self.repository.list();
+        let task_list_output = TaskListOutput::from(&tasks);
+        let json = serde_json::to_string(&task_list_output).unwrap();
+
+        Response::from_string(String::from(json)).with_status_code(200)
+    }
+
+    pub fn post(&mut self, request: &mut Request) -> Response<std::io::Cursor<Vec<u8>>> {
         let mut body = String::new();
         request.as_reader().read_to_string(&mut body).unwrap();
 
@@ -45,7 +80,7 @@ impl<T: TaskRepository> TaskController<T> {
 
         let command =
             RegisterTaskCommand::new(payload.title.as_str(), payload.description.as_str());
-        let mut use_case = RegisterTask::new(&mut self.repository);
+        let mut use_case = RegisterTask::new(self.repository);
         let result = match use_case.execute(command) {
             Ok(result) => result,
             Err(ref e) => {

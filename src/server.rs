@@ -14,6 +14,8 @@ impl Server {
     pub fn start(&self) {
         let server = tiny_http::Server::http("127.0.0.1:8080").unwrap();
 
+        let mut repository = TaskInMemoryRepository::new();
+
         loop {
             let mut request = match server.recv() {
                 Ok(rq) => rq,
@@ -24,13 +26,23 @@ impl Server {
             };
 
             match (request.url(), request.method()) {
+                ("/api/v1/tasks", Method::Get) => {
+                    let controller = TaskController::new(&mut repository);
+                    let response = controller.get();
+                    match request.respond(response) {
+                        Ok(_) => (),
+                        Err(e) => {
+                            println!("error (GET /api/v1/tasks): {}", e);
+                        }
+                    }
+                }
                 ("/api/v1/tasks", Method::Post) => {
-                    let repository = TaskInMemoryRepository::new();
-                    let mut controller = TaskController::new(repository);
+                    let mut controller = TaskController::new(&mut repository);
                     let response = controller.post(&mut request);
                     match request.respond(response) {
                         Ok(_) => (),
                         Err(e) => {
+                            //TODO: fix error message
                             println!("error: {}", e);
                         }
                     }
