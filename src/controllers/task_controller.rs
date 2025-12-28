@@ -1,5 +1,7 @@
 use crate::domain::task::task::Task;
 use crate::domain::task::task_repository::TaskRepository;
+use crate::use_cases::task::delete_task::DeleteTask;
+use crate::use_cases::task::delete_task_command::DeleteTaskCommand;
 use crate::use_cases::task::register_task::{RegisterTask, RegisterTaskError};
 use crate::use_cases::task::register_task_command::RegisterTaskCommand;
 use crate::use_cases::task::update_task::{UpdateTask, UpdateTaskError};
@@ -41,6 +43,14 @@ struct TaskPatchInput {
 #[derive(Debug, Serialize, Deserialize)]
 struct TaskPatchOutput {
     data: TaskDTO,
+}
+#[derive(Serialize, Deserialize)]
+struct TaskDeleteInput {
+    id: String,
+}
+#[derive(Serialize, Deserialize)]
+struct TaskDeleteOutput {
+    id: String,
 }
 
 impl TaskListOutput {
@@ -175,6 +185,31 @@ impl<'a, T: TaskRepository> TaskController<'a, T> {
                 description: result.description,
                 status: result.status,
             },
+        };
+        Response::from_string(serde_json::to_string(&payload).unwrap()).with_status_code(200)
+    }
+
+    pub fn delete(&mut self, request: &mut Request) -> Response<std::io::Cursor<Vec<u8>>> {
+        let mut body = String::new();
+        request.as_reader().read_to_string(&mut body).unwrap();
+
+        let payload: TaskDeleteInput = match serde_json::from_str(body.as_str()) {
+            Ok(payload) => payload,
+            Err(_) => {
+                return Response::from_string(String::from("Invalid request body"))
+                    .with_status_code(StatusCode::from(400));
+            }
+        };
+
+        let command = match DeleteTaskCommand::new(payload.id.as_str()) {
+            Ok(command) => command,
+            Err(_) => return Response::from_string(String::from("Invalid request payload")),
+        };
+        let mut use_case = DeleteTask::new(self.repository);
+        use_case.execute(command).unwrap();
+
+        let payload = TaskDeleteOutput {
+            id: payload.id.to_string(),
         };
         Response::from_string(serde_json::to_string(&payload).unwrap()).with_status_code(200)
     }

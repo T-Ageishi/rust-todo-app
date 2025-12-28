@@ -30,6 +30,10 @@ impl TaskId {
         }
     }
 
+    pub fn from(value: Uuid) -> Self {
+        Self { value }
+    }
+
     pub fn to_string(&self) -> String {
         self.value.to_string()
     }

@@ -4,3 +4,5 @@ pub mod register_task_result;
 pub mod update_task;
 pub mod update_task_command;
 pub mod update_task_result;
+pub mod delete_task_command;
+pub mod delete_task;
