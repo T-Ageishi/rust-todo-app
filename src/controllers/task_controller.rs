@@ -19,13 +19,9 @@ struct TaskPostInput {
     description: String,
     status: i32,
 }
-//TODO: fix structure
 #[derive(Serialize, Deserialize)]
 struct TaskPostOutput {
-    id: String,
-    title: String,
-    description: String,
-    status: i32,
+    data: TaskDTO,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -102,10 +98,12 @@ impl<'a, T: TaskRepository> TaskController<'a, T> {
         };
 
         let payload = TaskPostOutput {
-            id: result.id,
-            title: result.title,
-            description: result.description,
-            status: result.status,
+            data: TaskDTO {
+                id: result.id,
+                title: result.title,
+                description: result.description,
+                status: result.status,
+            }
         };
         Response::from_string(serde_json::to_string(&payload).unwrap()).with_status_code(200)
     }
