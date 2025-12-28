@@ -42,8 +42,7 @@ impl Server {
                     match request.respond(response) {
                         Ok(_) => (),
                         Err(e) => {
-                            //TODO: fix error message
-                            println!("error: {}", e);
+                            println!("error(POST /api/v1/tasks): {}", e);
                         }
                     }
                 }
