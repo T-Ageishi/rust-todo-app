@@ -149,7 +149,7 @@ impl<'a, T: TaskRepository> TaskController<'a, T> {
             Ok(result) => result,
             Err(ref e) => {
                 return match e {
-                    UpdateTaskError::InvalidID => {
+                    UpdateTaskError::InvalidId => {
                         Response::from_string(String::from("Invalid task ID input"))
                     }
                     UpdateTaskError::InvalidTitle => {

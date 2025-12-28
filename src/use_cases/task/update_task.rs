@@ -13,7 +13,7 @@ use uuid::Uuid;
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum UpdateTaskError {
-    InvalidID,
+    InvalidId,
     InvalidTitle,
     InvalidDescription,
     InvalidStatus,
@@ -36,7 +36,7 @@ impl<'a, T: TaskRepository> UpdateTask<'a, T> {
     ) -> Result<UpdateTaskResult, UpdateTaskError> {
         let id = match TaskId::try_from(command.id.to_string().as_str()) {
             Ok(id) => id,
-            Err(_) => return Err(UpdateTaskError::InvalidID),
+            Err(_) => return Err(UpdateTaskError::InvalidId),
         };
 
         let task = match self.repository.get_by_id(&id) {
