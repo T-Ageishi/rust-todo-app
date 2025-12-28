@@ -46,6 +46,16 @@ impl Server {
                         }
                     }
                 }
+                ("/api/v1/tasks", Method::Patch) => {
+                    let mut controller = TaskController::new(&mut repository);
+                    let response = controller.patch(&mut request);
+                    match request.respond(response) {
+                        Ok(_) => (),
+                        Err(e) => {
+                            println!("error (Patch /api/v1/tasks): {}", e);
+                        }
+                    }
+                }
                 _ => {
                     let _ = request.respond(Response::new_empty(tiny_http::StatusCode(404)));
                 }

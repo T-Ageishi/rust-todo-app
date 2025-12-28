@@ -1,5 +1,7 @@
-await registerTasks(10);
+// await registerTasks(10);
 await listTask();
+
+// await updateTask();
 
 /**
  * GET /api/v1/tasks
@@ -62,4 +64,23 @@ async function registerTasks(count) {
             status,
         };
     }
+}
+
+/**
+ * PATCH /api/v1/tasks
+ */
+async function updateTask() {
+    const res = await fetch("http://127.0.0.1:8080/api/v1/tasks", {
+        method: "PATCH",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            id: "78c45347-f332-4269-9115-6a5fa2bb1995",
+            title: "Sample Task(9) (modified)",
+        }),
+    });
+
+    const json = await res.json();
+    console.log(res.status, json);
 }

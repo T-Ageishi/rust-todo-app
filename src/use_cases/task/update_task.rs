@@ -4,10 +4,10 @@ use crate::domain::task::task_id::TaskId;
 use crate::domain::task::task_repository::TaskRepository;
 use crate::domain::task::task_status::TaskStatus;
 use crate::domain::task::task_title::TaskTitle;
-use crate::use_cases::task::update_task_command::UpdateTaskCommand;
-use crate::use_cases::task::update_task_result::UpdateTaskResult;
 #[cfg(test)]
 use crate::repositories::task::task_in_memory_repository::TaskInMemoryRepository;
+use crate::use_cases::task::update_task_command::UpdateTaskCommand;
+use crate::use_cases::task::update_task_result::UpdateTaskResult;
 #[cfg(test)]
 use uuid::Uuid;
 
@@ -26,6 +26,10 @@ pub struct UpdateTask<'a, T: TaskRepository> {
 }
 
 impl<'a, T: TaskRepository> UpdateTask<'a, T> {
+    pub fn new(repository: &'a mut T) -> Self {
+        Self { repository }
+    }
+
     pub fn execute(
         &mut self,
         command: UpdateTaskCommand,
@@ -89,7 +93,8 @@ fn execute_when_valid_input_then_returns_result() {
         Some(String::from("New Task Title").as_str()),
         Some(String::from("New Task Description").as_str()),
         Some(2),
-    ).unwrap();
+    )
+        .unwrap();
     let result = update_task.execute(command).ok().unwrap();
     assert_eq!(result.id, ids.get(0).unwrap().to_string());
     assert_eq!(result.title, String::from("New Task Title"));
@@ -110,7 +115,8 @@ fn execute_when_invalid_task_title_then_returns_error() {
         Some(String::from("").as_str()),
         Some(String::from("New Task Description").as_str()),
         Some(2),
-    ).unwrap();
+    )
+        .unwrap();
     let result = update_task.execute(command).err().unwrap();
     assert_eq!(result, UpdateTaskError::InvalidTitle);
 }
@@ -128,7 +134,8 @@ fn execute_when_invalid_task_description_then_returns_error() {
         Some(String::from("New Task Title").as_str()),
         Some(String::from("").as_str()),
         Some(2),
-    ).unwrap();
+    )
+        .unwrap();
     let result = update_task.execute(command).err().unwrap();
     assert_eq!(result, UpdateTaskError::InvalidDescription);
 }
@@ -146,7 +153,8 @@ fn execute_when_invalid_task_status_then_returns_error() {
         Some(String::from("New Task Title").as_str()),
         Some(String::from("New Task Description").as_str()),
         Some(4),
-    ).unwrap();
+    )
+        .unwrap();
     let result = update_task.execute(command).err().unwrap();
     assert_eq!(result, UpdateTaskError::InvalidStatus);
 }
@@ -162,7 +170,8 @@ fn execute_when_task_not_found_then_returns_error() {
         Some(String::from("New Task Title").as_str()),
         Some(String::from("New Task Description").as_str()),
         Some(4),
-    ).unwrap();
+    )
+        .unwrap();
     let result = update_task.execute(command).err().unwrap();
     assert_eq!(result, UpdateTaskError::TaskNotFound);
 }
