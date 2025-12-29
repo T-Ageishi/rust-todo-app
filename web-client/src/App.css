@@ -43,6 +43,26 @@
   color: #888;
 }
 
+.tasks-actions {
+  padding: 0 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.tasks-actions__register {
+  padding: 8px 16px;
+  background-color: #646cff;
+
+  &:hover {
+    border-color: transparent;
+  }
+}
+
+.tasks-actions__register-icon {
+  font-weight: bold;
+  padding-right: 4px;
+}
+
 .tasks__cell {
   padding: 16px;
 }
@@ -67,4 +87,143 @@
   &:hover {
     border-color: transparent;
   }
+}
+/* =========================
+   task-dialog (dark)
+========================= */
+
+.task-dialog {
+  width: 420px;
+  max-width: calc(100vw - 32px);
+  padding: 0;
+  border-radius: 12px;
+  border: 1px solid #333;
+  background-color: #1e1e1e; /* ← 白くしない */
+  color: rgba(255, 255, 255, 0.87);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+}
+
+.task-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.65);
+}
+
+/* =========================
+   form layout
+========================= */
+
+.task-dialog__form {
+  display: grid;
+  grid-template-columns: 1fr;
+  row-gap: 20px;
+  padding: 24px;
+}
+
+/* =========================
+   title
+========================= */
+
+.task-dialog__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+/* =========================
+   fields
+========================= */
+
+.task-dialog__field {
+  display: grid;
+  row-gap: 6px;
+}
+
+.task-dialog__label {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+/* 入力系 */
+.task-dialog__input,
+.task-dialog__textarea,
+.task-dialog__select {
+  width: 100%;
+  height: 36px;
+  padding: 0 10px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424; /* root と合わせる */
+  border: 1px solid #333;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+/* textarea 例外 */
+.task-dialog__textarea {
+  height: auto;
+  min-height: 80px;
+  padding: 8px 10px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+/* select */
+.task-dialog__select {
+  appearance: none;
+}
+
+/* focus */
+.task-dialog__input:focus,
+.task-dialog__textarea:focus,
+.task-dialog__select:focus {
+  outline: none;
+  border-color: #646cff;
+}
+
+/* =========================
+   actions
+========================= */
+
+.task-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+/* =========================
+   buttons
+========================= */
+
+.task-dialog__button {
+  height: 36px;
+  padding: 0 16px;
+  font-size: 14px;
+  border-radius: 8px; /* button と揃える */
+  border: 1px solid transparent;
+  background-color: #1a1a1a; /* 既存 button に寄せる */
+  color: rgba(255, 255, 255, 0.87);
+  cursor: pointer;
+}
+
+.task-dialog__button:hover {
+  border-color: #646cff;
+}
+
+/* primary */
+.task-dialog__button--primary {
+  background-color: #646cff;
+  color: #fff;
+}
+
+.task-dialog__button--primary:hover {
+  background-color: #535bf2;
+}
+
+/* secondary */
+.task-dialog__button--secondary {
+  background-color: #1a1a1a;
 }
