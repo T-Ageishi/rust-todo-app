@@ -99,8 +99,11 @@ impl<'a, T: TaskRepository> TaskController<'a, T> {
             }
         };
 
-        let command =
-            RegisterTaskCommand::new(payload.title.as_str(), payload.description.as_str());
+        let command = RegisterTaskCommand::new(
+            payload.title.as_str(),
+            payload.description.as_str(),
+            payload.status,
+        );
         let mut use_case = RegisterTask::new(self.repository);
         let result = match use_case.execute(command) {
             Ok(result) => result,
@@ -112,6 +115,10 @@ impl<'a, T: TaskRepository> TaskController<'a, T> {
                     }
                     RegisterTaskError::InvalidDescription => {
                         Response::from_string(String::from("Invalid task description input"))
+                            .with_status_code(StatusCode::from(400))
+                    }
+                    RegisterTaskError::InvalidStatus => {
+                        Response::from_string(String::from("Invalid task status input"))
                             .with_status_code(StatusCode::from(400))
                     }
                     RegisterTaskError::RepositoryError => {
