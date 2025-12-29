@@ -4,7 +4,6 @@ use crate::domain::task::task_id::TaskId;
 use crate::domain::task::task_repository::TaskRepository;
 use crate::domain::task::task_status::TaskStatus;
 use crate::domain::task::task_title::TaskTitle;
-use crate::repositories::task::task_in_memory_repository::TaskInMemoryRepository;
 use crate::use_cases::task::register_task_command::RegisterTaskCommand;
 use crate::use_cases::task::register_task_result::RegisterTaskResult;
 
