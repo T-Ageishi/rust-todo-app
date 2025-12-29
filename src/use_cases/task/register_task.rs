@@ -48,50 +48,56 @@ impl<'a, T: TaskRepository> RegisterTask<'a, T> {
     }
 }
 
-#[test]
-fn execute_when_valid_input_then_returns_registered_task() {
-    let mut repository = TaskInMemoryRepository::new();
-    let mut register_task = RegisterTask::new(&mut repository);
-    let command = RegisterTaskCommand::new("Task Title", "Task Description");
-    let result = register_task.execute(command).ok().unwrap();
-    assert_eq!(result.title, "Task Title");
-    assert_eq!(result.description, "Task Description");
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::repositories::task::task_in_memory_repository::TaskInMemoryRepository;
 
-#[test]
-fn execute_when_task_title_is_empty_then_returns_error() {
-    let mut repository = TaskInMemoryRepository::new();
-    let mut register_task = RegisterTask::new(&mut repository);
-    let command = RegisterTaskCommand::new("", "Task Description");
-    let result = register_task.execute(command).err().unwrap();
-    assert_eq!(result, RegisterTaskError::InvalidTitle);
-}
+    #[test]
+    fn execute_when_valid_input_then_returns_registered_task() {
+        let mut repository = TaskInMemoryRepository::new();
+        let mut register_task = RegisterTask::new(&mut repository);
+        let command = RegisterTaskCommand::new("Task Title", "Task Description");
+        let result = register_task.execute(command).ok().unwrap();
+        assert_eq!(result.title, "Task Title");
+        assert_eq!(result.description, "Task Description");
+    }
 
-#[test]
-fn execute_when_task_title_is_too_long_then_returns_error() {
-    let mut repository = TaskInMemoryRepository::new();
-    let mut register_task = RegisterTask::new(&mut repository);
-    let task_title = String::from("A").repeat(65);
-    let command = RegisterTaskCommand::new(task_title.as_str(), "Task Description");
-    let result = register_task.execute(command).err().unwrap();
-    assert_eq!(result, RegisterTaskError::InvalidTitle);
-}
+    #[test]
+    fn execute_when_task_title_is_empty_then_returns_error() {
+        let mut repository = TaskInMemoryRepository::new();
+        let mut register_task = RegisterTask::new(&mut repository);
+        let command = RegisterTaskCommand::new("", "Task Description");
+        let result = register_task.execute(command).err().unwrap();
+        assert_eq!(result, RegisterTaskError::InvalidTitle);
+    }
 
-#[test]
-fn execute_when_task_description_is_empty_then_returns_error() {
-    let mut repository = TaskInMemoryRepository::new();
-    let mut register_task = RegisterTask::new(&mut repository);
-    let command = RegisterTaskCommand::new("Task Title", "");
-    let result = register_task.execute(command).err().unwrap();
-    assert_eq!(result, RegisterTaskError::InvalidDescription);
-}
+    #[test]
+    fn execute_when_task_title_is_too_long_then_returns_error() {
+        let mut repository = TaskInMemoryRepository::new();
+        let mut register_task = RegisterTask::new(&mut repository);
+        let task_title = String::from("A").repeat(65);
+        let command = RegisterTaskCommand::new(task_title.as_str(), "Task Description");
+        let result = register_task.execute(command).err().unwrap();
+        assert_eq!(result, RegisterTaskError::InvalidTitle);
+    }
 
-#[test]
-fn execute_when_task_description_is_too_long_then_returns_error() {
-    let mut repository = TaskInMemoryRepository::new();
-    let mut register_task = RegisterTask::new(&mut repository);
-    let task_description = String::from("A").repeat(257);
-    let command = RegisterTaskCommand::new("Task Title", task_description.as_str());
-    let result = register_task.execute(command).err().unwrap();
-    assert_eq!(result, RegisterTaskError::InvalidDescription);
+    #[test]
+    fn execute_when_task_description_is_empty_then_returns_error() {
+        let mut repository = TaskInMemoryRepository::new();
+        let mut register_task = RegisterTask::new(&mut repository);
+        let command = RegisterTaskCommand::new("Task Title", "");
+        let result = register_task.execute(command).err().unwrap();
+        assert_eq!(result, RegisterTaskError::InvalidDescription);
+    }
+
+    #[test]
+    fn execute_when_task_description_is_too_long_then_returns_error() {
+        let mut repository = TaskInMemoryRepository::new();
+        let mut register_task = RegisterTask::new(&mut repository);
+        let task_description = String::from("A").repeat(257);
+        let command = RegisterTaskCommand::new("Task Title", task_description.as_str());
+        let result = register_task.execute(command).err().unwrap();
+        assert_eq!(result, RegisterTaskError::InvalidDescription);
+    }
 }
