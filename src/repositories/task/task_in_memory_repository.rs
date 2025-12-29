@@ -87,68 +87,73 @@ impl TaskInMemoryRepository {
     }
 }
 
-#[test]
-fn list_when_tasks_are_registered_then_returns_task_list() {
-    let mut repository = TaskInMemoryRepository::new();
-    repository.register_test_data();
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    let list = repository.list();
-    assert_eq!(list.len(), 3);
-}
+    #[test]
+    fn list_when_tasks_are_registered_then_returns_task_list() {
+        let mut repository = TaskInMemoryRepository::new();
+        repository.register_test_data();
 
-#[test]
-fn list_when_tasks_are_not_registered_then_returns_empty_list() {
-    let repository = TaskInMemoryRepository::new();
-    let list = repository.list();
-    assert_eq!(list.len(), 0);
-}
+        let list = repository.list();
+        assert_eq!(list.len(), 3);
+    }
 
-#[test]
-fn get_by_id_when_valid_value_then_returns_task() {
-    let mut repository = TaskInMemoryRepository::new();
-    let ids = repository.register_test_data();
-    let task = repository.get_by_id(&ids[0]).ok().unwrap();
-    assert_eq!(task.id, ids[0]);
-    assert_eq!(task.title.to_string(), "AAA");
-    assert_eq!(task.description.to_string(), "AAA");
-}
+    #[test]
+    fn list_when_tasks_are_not_registered_then_returns_empty_list() {
+        let repository = TaskInMemoryRepository::new();
+        let list = repository.list();
+        assert_eq!(list.len(), 0);
+    }
 
-#[test]
-fn register_when_valid_value_then_returns_task() {
-    let mut repository = TaskInMemoryRepository::new();
-    repository.register_test_data();
+    #[test]
+    fn get_by_id_when_valid_value_then_returns_task() {
+        let mut repository = TaskInMemoryRepository::new();
+        let ids = repository.register_test_data();
+        let task = repository.get_by_id(&ids[0]).ok().unwrap();
+        assert_eq!(task.id, ids[0]);
+        assert_eq!(task.title.to_string(), "AAA");
+        assert_eq!(task.description.to_string(), "AAA");
+    }
 
-    let task_id = TaskId::new();
-    let task_title = TaskTitle::try_from("DDD").unwrap();
-    let task_description = TaskDescription::try_from("DDD").unwrap();
-    let task = Task::new(task_id, task_title, task_description, TaskStatus::Todo);
-    let task = repository.register(task).ok().unwrap();
-    assert_eq!(task.title.to_string(), "DDD");
-    assert_eq!(task.description.to_string(), "DDD");
-}
+    #[test]
+    fn register_when_valid_value_then_returns_task() {
+        let mut repository = TaskInMemoryRepository::new();
+        repository.register_test_data();
 
-#[test]
-fn update_when_valid_value_then_returns_task() {
-    let mut repository = TaskInMemoryRepository::new();
-    let ids = repository.register_test_data();
+        let task_id = TaskId::new();
+        let task_title = TaskTitle::try_from("DDD").unwrap();
+        let task_description = TaskDescription::try_from("DDD").unwrap();
+        let task = Task::new(task_id, task_title, task_description, TaskStatus::Todo);
+        let task = repository.register(task).ok().unwrap();
+        assert_eq!(task.title.to_string(), "DDD");
+        assert_eq!(task.description.to_string(), "DDD");
+    }
 
-    let task_id = ids[0].clone();
-    let task_title = TaskTitle::try_from("AAA2").unwrap();
-    let task_description = TaskDescription::try_from("AAA2").unwrap();
-    let task = Task::new(task_id, task_title, task_description, TaskStatus::Todo);
-    let task = repository.update(task).ok().unwrap();
-    assert_eq!(task.title.to_string(), "AAA2");
-    assert_eq!(task.description.to_string(), "AAA2");
-}
+    #[test]
+    fn update_when_valid_value_then_returns_task() {
+        let mut repository = TaskInMemoryRepository::new();
+        let ids = repository.register_test_data();
 
-#[test]
-fn delete_when_valid_id_then_returns_empty_task() {
-    let mut repository = TaskInMemoryRepository::new();
-    let ids = repository.register_test_data();
+        let task_id = ids[0].clone();
+        let task_title = TaskTitle::try_from("AAA2").unwrap();
+        let task_description = TaskDescription::try_from("AAA2").unwrap();
+        let task = Task::new(task_id, task_title, task_description, TaskStatus::Todo);
+        let task = repository.update(task).ok().unwrap();
+        assert_eq!(task.title.to_string(), "AAA2");
+        assert_eq!(task.description.to_string(), "AAA2");
+    }
 
-    let task_id = ids[0].clone();
-    repository.delete(&task_id);
+    #[test]
+    fn delete_when_valid_id_then_returns_empty_task() {
+        let mut repository = TaskInMemoryRepository::new();
+        let ids = repository.register_test_data();
 
-    let list = repository.list();
-    assert_eq!(list.len(), 2);
+        let task_id = ids[0].clone();
+        repository.delete(&task_id);
+
+        let list = repository.list();
+        assert_eq!(list.len(), 2);
+    }
 }
