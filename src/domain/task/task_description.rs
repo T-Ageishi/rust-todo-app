@@ -36,26 +36,31 @@ impl TaskDescription {
     }
 }
 
-#[test]
-fn try_from_when_valid_value_then_returns_instance() {
-    let value = "Task Description";
-    let task_description = TaskDescription::try_from(value).unwrap();
-    assert_eq!(task_description.value, value);
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    let value = String::from("A").repeat(TASK_DESCRIPTION_MAX_LENGTH);
-    let task_description = TaskDescription::try_from(value.as_str()).unwrap();
-    assert_eq!(task_description.value, value);
-}
+    #[test]
+    fn try_from_when_valid_value_then_returns_instance() {
+        let value = "Task Description";
+        let task_description = TaskDescription::try_from(value).unwrap();
+        assert_eq!(task_description.value, value);
 
-#[test]
-fn try_from_when_value_is_empty_then_returns_error() {
-    let err = TaskDescription::try_from("").unwrap_err();
-    assert_eq!(err, TaskDescriptionParseError::Empty);
-}
+        let value = String::from("A").repeat(TASK_DESCRIPTION_MAX_LENGTH);
+        let task_description = TaskDescription::try_from(value.as_str()).unwrap();
+        assert_eq!(task_description.value, value);
+    }
 
-#[test]
-fn _try_from_when_value_is_too_long_then_returns_error() {
-    let value = String::from("A").repeat(TASK_DESCRIPTION_MAX_LENGTH + 1);
-    let err = TaskDescription::try_from(value.as_str()).unwrap_err();
-    assert_eq!(err, TaskDescriptionParseError::TooLong);
+    #[test]
+    fn try_from_when_value_is_empty_then_returns_error() {
+        let err = TaskDescription::try_from("").unwrap_err();
+        assert_eq!(err, TaskDescriptionParseError::Empty);
+    }
+
+    #[test]
+    fn _try_from_when_value_is_too_long_then_returns_error() {
+        let value = String::from("A").repeat(TASK_DESCRIPTION_MAX_LENGTH + 1);
+        let err = TaskDescription::try_from(value.as_str()).unwrap_err();
+        assert_eq!(err, TaskDescriptionParseError::TooLong);
+    }
 }
