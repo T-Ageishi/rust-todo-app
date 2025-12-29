@@ -1,58 +1,62 @@
 import "./App.css";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 
-const TASK_STATUS = Object.freeze({
+/* =====================
+ * constants & types
+ * ===================== */
+
+const TASK_STATUS = {
   TODO: 1,
   DOING: 2,
   DONE: 3,
-});
+} as const;
+
+type TaskStatus = (typeof TASK_STATUS)[keyof typeof TASK_STATUS];
 
 type Task = {
   id: string;
   title: string;
   description: string;
-  status: (typeof TASK_STATUS)[keyof typeof TASK_STATUS];
+  status: TaskStatus;
 };
-type TaskProps = {
-  tasks: Task[];
-  onRegister: (source: {
-    title: Task["title"];
-    description: Task["description"];
-    status: Task["status"];
-  }) => Promise<void>;
-  onUpdate: (source: {
-    id: Task["id"];
-    title: Task["title"];
-    description: Task["description"];
-    status: Task["status"];
-  }) => Promise<void>;
-  onDelete: (id: Task["id"]) => Promise<void>;
-};
+
+type TaskCreatePayload = Omit<Task, "id">;
+
+type TaskUpdatePayload = {
+  id: Task["id"];
+  status: TaskStatus;
+} & Partial<Omit<Task, "id" | "status">>;
 
 type TaskEditorSubmitSource =
   | {
       mode: "register";
-      title: Task["title"];
-      description: Task["description"];
-      status: Task["status"];
+      payload: TaskCreatePayload;
     }
   | {
       mode: "update";
-      id: Task["id"];
-      title: Task["title"];
-      description: Task["description"];
-      status: Task["status"];
+      payload: TaskUpdatePayload;
     };
 
 type TaskEditorProps = {
   onEdit: (source: TaskEditorSubmitSource) => Promise<void>;
 };
 
-const taskStatusMap = {
+type TaskProps = {
+  tasks: Task[];
+  onRegister: (payload: TaskCreatePayload) => Promise<void>;
+  onUpdate: (payload: TaskUpdatePayload) => Promise<void>;
+  onDelete: (id: Task["id"]) => Promise<void>;
+};
+
+const taskStatusMap: Record<TaskStatus, string> = {
   [TASK_STATUS.TODO]: "ToDo",
   [TASK_STATUS.DOING]: "Doing",
   [TASK_STATUS.DONE]: "Done",
 };
+
+/* =====================
+ * App
+ * ===================== */
 
 function App() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -63,38 +67,20 @@ function App() {
     })();
   }, []);
 
-  const handleRegisterTask = async (source: {
-    title: Task["title"];
-    description: Task["description"];
-    status: Task["status"];
-  }) => {
-    const task = await registerTask(source);
-    setTasks([task, ...tasks]);
+  const handleRegisterTask = async (payload: TaskCreatePayload) => {
+    const task = await registerTask(payload);
+    setTasks((prev) => [task, ...prev]);
   };
 
-  const handleUpdateTask = async (source: {
-    id: Task["id"];
-    title: Task["title"];
-    description: Task["description"];
-    status: Task["status"];
-  }) => {
-    const task = await updateTask(source);
-    setTasks(() =>
-      tasks.reduce<Task[]>((acc, t) => {
-        if (t.id === task.id) {
-          acc.push(task);
-        } else {
-          acc.push(t);
-        }
-        return acc;
-      }, []),
-    );
+  const handleUpdateTask = async (payload: TaskUpdatePayload) => {
+    const task = await updateTask(payload);
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? task : t)));
   };
 
   const handleDeleteTask = async (id: Task["id"]) => {
     const result = await deleteTask(id);
     if (result) {
-      setTasks(() => tasks.filter((t) => t.id !== id));
+      setTasks((prev) => prev.filter((t) => t.id !== id));
     }
   };
 
@@ -110,36 +96,32 @@ function App() {
   );
 }
 
+/* =====================
+ * Tasks
+ * ===================== */
+
 function Tasks({ tasks, onRegister, onUpdate, onDelete }: TaskProps) {
   const { open, close, TaskEditor } = useTaskEditor();
 
   const handleEdit = async (source: TaskEditorSubmitSource) => {
     if (source.mode === "register") {
-      await onRegister({
-        title: source.title,
-        description: source.description,
-        status: source.status,
-      });
-    } else if (source.mode === "update") {
-      await onUpdate({
-        id: source.id,
-        title: source.title,
-        description: source.description,
-        status: source.status,
-      });
+      await onRegister(source.payload);
+    } else {
+      await onUpdate(source.payload);
     }
-
     close();
   };
 
   return (
     <>
-      <div className={"tasks-actions"}>
-        <button onClick={() => open({ type: "register" })} className={"tasks-actions__register"}>
-          <span className={"tasks-actions__register-icon"}>+</span>Register
+      <div className="tasks-actions">
+        <button onClick={() => open({ type: "register" })} className="tasks-actions__register">
+          <span className="tasks-actions__register-icon">+</span>
+          Register
         </button>
       </div>
-      <table className={"tasks"}>
+
+      <table className="tasks">
         <thead>
           <tr>
             <td className={"tasks__cell tasks__header-cell"}>ID</td>
@@ -173,34 +155,30 @@ function Tasks({ tasks, onRegister, onUpdate, onDelete }: TaskProps) {
           ))}
         </tbody>
       </table>
+
       <TaskEditor onEdit={handleEdit} />
     </>
   );
 }
 
+/* =====================
+ * useTaskEditor
+ * ===================== */
+
 function useTaskEditor() {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const modeRef = useRef<"register" | "update">("register");
-  const initialValueRef = useRef<{
-    id: Task["id"];
-    title: Task["title"];
-    description: Task["description"];
-    status: Task["status"];
-  }>({ id: "", title: "", description: "", status: TASK_STATUS.TODO });
+
+  const initialValueRef = useRef<Task>({
+    id: "",
+    title: "",
+    description: "",
+    status: TASK_STATUS.TODO,
+  });
 
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  function open(
-    source:
-      | { type: "register" }
-      | {
-          type: "update";
-          id: Task["id"];
-          title: Task["title"];
-          description: Task["description"];
-          status: Task["status"];
-        },
-  ) {
+  function open(source: { type: "register" } | ({ type: "update" } & Task)) {
     if (source.type === "register") {
       modeRef.current = "register";
       initialValueRef.current = {
@@ -209,14 +187,9 @@ function useTaskEditor() {
         description: "",
         status: TASK_STATUS.TODO,
       };
-    } else if (source.type === "update") {
+    } else {
       modeRef.current = "update";
-      initialValueRef.current = {
-        id: source.id,
-        title: source.title,
-        description: source.description,
-        status: source.status,
-      };
+      initialValueRef.current = source;
     }
 
     setDialogOpen(true);
@@ -229,9 +202,9 @@ function useTaskEditor() {
   }
 
   function TaskEditor({ onEdit }: TaskEditorProps) {
-    const [title, setTitle] = useState<Task["title"]>(initialValueRef.current.title);
-    const [description, setDescription] = useState<Task["description"]>("");
-    const [status, setStatus] = useState<Task["status"]>(TASK_STATUS.TODO);
+    const [title, setTitle] = useState("");
+    const [description, setDescription] = useState("");
+    const [status, setStatus] = useState<TaskStatus>(TASK_STATUS.TODO);
 
     useEffect(() => {
       if (!dialogOpen) return;
@@ -239,68 +212,63 @@ function useTaskEditor() {
       setTitle(initialValueRef.current.title);
       setDescription(initialValueRef.current.description);
       setStatus(initialValueRef.current.status);
-    }, [
-      dialogOpen,
-      initialValueRef.current.title,
-      initialValueRef.current.description,
-      initialValueRef.current.status,
-    ]);
+    }, [dialogOpen]);
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault();
 
       if (modeRef.current === "register") {
-        await onEdit({ mode: modeRef.current, title, description, status });
-      } else if (modeRef.current === "update") {
         await onEdit({
-          mode: modeRef.current,
-          id: initialValueRef.current.id,
-          title,
-          description,
-          status,
+          mode: "register",
+          payload: { title, description, status },
+        });
+      } else {
+        await onEdit({
+          mode: "update",
+          payload: {
+            id: initialValueRef.current.id,
+            title,
+            description,
+            status,
+          },
         });
       }
-
-      setTitle("");
-      setDescription("");
-      setStatus(TASK_STATUS.TODO);
     };
 
     return (
-      <dialog ref={dialogRef} className="task-dialog">
-        <form className={"task-dialog__form"} method="dialog" onSubmit={handleSubmit}>
-          <h3 className={"task-dialog__title"}>Register Task</h3>
+      <dialog ref={dialogRef} className={"task-dialog"}>
+        <form onSubmit={handleSubmit} className={"task-dialog__form"}>
+          <h3 className={"task-dialog__title"}>
+            {modeRef.current === "register" ? "Register Task" : "Update Task"}
+          </h3>
 
           <div className={"task-dialog__field"}>
             <label className={"task-dialog__label"}>
               Title
               <input
-                className={"task-dialog__input"}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                required
+                className={"task-dialog__input"}
               />
             </label>
           </div>
-
           <div className={"task-dialog__field"}>
             <label className={"task-dialog__label"}>
               Description
               <textarea
-                className={"task-dialog__textarea"}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
+                className={"task-dialog__textarea"}
               />
             </label>
           </div>
-
           <div className={"task-dialog__field"}>
             <label className={"task-dialog__label"}>
               Status
               <select
-                className={"task-dialog__select"}
                 value={status}
-                onChange={(e) => setStatus(Number(e.target.value) as Task["status"])}
+                onChange={(e) => setStatus(Number(e.target.value) as TaskStatus)}
+                className={"task-dialog__select"}
               >
                 {Object.entries(taskStatusMap).map(([value, label]) => (
                   <option key={value} value={value}>
@@ -310,17 +278,12 @@ function useTaskEditor() {
               </select>
             </label>
           </div>
-
           <menu className={"task-dialog__actions"}>
-            <button
-              className={"task-dialog__button task-dialog__button--secondary"}
-              type="button"
-              onClick={() => close()}
-            >
+            <button type="button" onClick={close}>
               Cancel
             </button>
-            <button className={"task-dialog__button task-dialog__button--primary"} type="submit">
-              Register
+            <button type="submit" className={"task-dialog__save"}>
+              {modeRef.current === "register" ? "Register" : "Update"}
             </button>
           </menu>
         </form>
@@ -331,85 +294,42 @@ function useTaskEditor() {
   return { open, close, TaskEditor };
 }
 
+/* =====================
+ * API
+ * ===================== */
+
 async function listTasks(): Promise<Task[]> {
+  const res = await fetch("/api/v1/tasks");
+  const json = await res.json();
+  return json.data;
+}
+
+async function registerTask(payload: TaskCreatePayload): Promise<Task> {
   const res = await fetch("/api/v1/tasks", {
-    method: "GET",
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
   });
   const json = await res.json();
   return json.data;
 }
 
-async function registerTask({
-  title,
-  description,
-  status,
-}: {
-  title: Task["title"];
-  description: Task["description"];
-  status: Task["status"];
-}): Promise<Task> {
-  const res = await fetch("/api/v1/tasks", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      title,
-      description,
-      status,
-    }),
-  });
-
-  const json = await res.json();
-  return json.data as Task;
-}
-
-async function updateTask({
-  id,
-  title,
-  description,
-  status,
-}: {
-  id: Task["id"];
-  title: Task["title"];
-  description: Task["description"];
-  status: Task["status"];
-}): Promise<Task> {
-  const payload: {
-    id: Task["id"];
-    title?: Task["title"];
-    description?: Task["description"];
-    status: Task["status"];
-  } = { id, status };
-  if (title !== "") {
-    payload.title = title;
-  }
-  if (description !== "") {
-    payload.description = description;
-  }
+async function updateTask(payload: TaskUpdatePayload): Promise<Task> {
   const res = await fetch("/api/v1/tasks", {
     method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
-
   const json = await res.json();
-  return json.data as Task;
+  return json.data;
 }
 
 async function deleteTask(id: Task["id"]) {
   const res = await fetch("/api/v1/tasks", {
     method: "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      id,
-    }),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id }),
   });
-
   return res.status === 200;
 }
 

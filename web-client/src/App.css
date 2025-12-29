@@ -212,32 +212,6 @@
    buttons
 ========================= */
 
-.task-dialog__button {
-  height: 36px;
-  padding: 0 16px;
-  font-size: 14px;
-  border-radius: 8px; /* button と揃える */
-  border: 1px solid transparent;
-  background-color: #1a1a1a; /* 既存 button に寄せる */
-  color: rgba(255, 255, 255, 0.87);
-  cursor: pointer;
-}
-
-.task-dialog__button:hover {
-  border-color: #646cff;
-}
-
-/* primary */
-.task-dialog__button--primary {
+.task-dialog__save {
   background-color: #646cff;
-  color: #fff;
-}
-
-.task-dialog__button--primary:hover {
-  background-color: #535bf2;
-}
-
-/* secondary */
-.task-dialog__button--secondary {
-  background-color: #1a1a1a;
 }
