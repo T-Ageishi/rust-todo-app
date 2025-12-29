@@ -23,7 +23,7 @@ function App() {
 
   useEffect(() => {
     (async () => {
-      setTasks(await fetchTasks());
+      setTasks(await listTasks());
     })();
   }, []);
 
@@ -78,7 +78,7 @@ function Tasks({ tasks, onDelete }: TaskProps) {
   );
 }
 
-async function fetchTasks(): Promise<Task[]> {
+async function listTasks(): Promise<Task[]> {
   const res = await fetch("/api/v1/tasks", {
     method: "GET",
   });
