@@ -1,6 +1,6 @@
 #[derive(Debug, PartialEq, Eq)]
 pub enum StatusParseError {
-    InvalidStatus
+    InvalidStatus,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -33,20 +33,25 @@ impl TryFrom<i32> for TaskStatus {
     }
 }
 
-#[test]
-fn try_from_when_valid_value_then_returns_instance() {
-    let task_status = TaskStatus::try_from(1).unwrap();
-    assert_eq!(task_status, TaskStatus::Todo);
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    let task_status = TaskStatus::try_from(2).unwrap();
-    assert_eq!(task_status, TaskStatus::Doing);
+    #[test]
+    fn try_from_when_valid_value_then_returns_instance() {
+        let task_status = TaskStatus::try_from(1).unwrap();
+        assert_eq!(task_status, TaskStatus::Todo);
 
-    let task_status = TaskStatus::try_from(3).unwrap();
-    assert_eq!(task_status, TaskStatus::Done);
-}
+        let task_status = TaskStatus::try_from(2).unwrap();
+        assert_eq!(task_status, TaskStatus::Doing);
 
-#[test]
-fn try_from_when_invalid_value_then_returns_error() {
-    let err = TaskStatus::try_from(10).unwrap_err();
-    assert_eq!(err, StatusParseError::InvalidStatus);
+        let task_status = TaskStatus::try_from(3).unwrap();
+        assert_eq!(task_status, TaskStatus::Done);
+    }
+
+    #[test]
+    fn try_from_when_invalid_value_then_returns_error() {
+        let err = TaskStatus::try_from(10).unwrap_err();
+        assert_eq!(err, StatusParseError::InvalidStatus);
+    }
 }
