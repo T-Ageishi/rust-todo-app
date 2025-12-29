@@ -207,15 +207,15 @@ function useTaskEditor() {
           </div>
 
           <menu className={"task-dialog__actions"}>
-            <button className={"task-dialog__button task-dialog__button--primary"} type="submit">
-              Register
-            </button>
             <button
               className={"task-dialog__button task-dialog__button--secondary"}
               type="button"
               onClick={() => close()}
             >
               Cancel
+            </button>
+            <button className={"task-dialog__button task-dialog__button--primary"} type="submit">
+              Register
             </button>
           </menu>
         </form>
