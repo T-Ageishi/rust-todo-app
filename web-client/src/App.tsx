@@ -23,6 +23,20 @@ type TaskProps = {
   onDelete: (id: Task["id"]) => Promise<void>;
 };
 
+type TaskEditorProps = {
+  onEdit: (source: {
+    title: Task["title"];
+    description: Task["description"];
+    status: Task["status"];
+  }) => Promise<void>;
+};
+
+const taskStatusMap = {
+  [TASK_STATUS.TODO]: "ToDo",
+  [TASK_STATUS.DOING]: "Doing",
+  [TASK_STATUS.DONE]: "Done",
+};
+
 function App() {
   const [tasks, setTasks] = useState<Task[]>([]);
 
@@ -57,44 +71,30 @@ function App() {
 }
 
 function Tasks({ tasks, onRegister, onDelete }: TaskProps) {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [status, setStatus] = useState<Task["status"]>(TASK_STATUS.TODO);
+  const { open, close, TaskEditor } = useTaskEditor();
 
-  const dialogRef = useRef<HTMLDialogElement>(null);
-  const openDialog = () => {
-    dialogRef.current?.showModal();
-  };
-  const closeDialog = () => {
-    dialogRef.current?.close();
-  };
-
-  const taskStatusMap = {
-    [TASK_STATUS.TODO]: "ToDo",
-    [TASK_STATUS.DOING]: "Doing",
-    [TASK_STATUS.DONE]: "Done",
-  };
-
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
+  const handleEdit = async ({
+    title,
+    description,
+    status,
+  }: {
+    title: Task["title"];
+    description: Task["description"];
+    status: Task["status"];
+  }) => {
     await onRegister({
       title,
       description,
       status,
     });
 
-    setTitle("");
-    setDescription("");
-    setStatus(TASK_STATUS.TODO);
-
-    closeDialog();
+    close();
   };
 
   return (
     <>
       <div className={"tasks-actions"}>
-        <button onClick={() => openDialog()} className={"tasks-actions__register"}>
+        <button onClick={() => open()} className={"tasks-actions__register"}>
           <span className={"tasks-actions__register-icon"}>+</span>Register
         </button>
       </div>
@@ -126,6 +126,42 @@ function Tasks({ tasks, onRegister, onDelete }: TaskProps) {
           ))}
         </tbody>
       </table>
+      <TaskEditor onEdit={handleEdit} />
+    </>
+  );
+}
+
+function useTaskEditor() {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  function open() {
+    dialogRef.current?.showModal();
+  }
+
+  function close() {
+    dialogRef.current?.close();
+  }
+
+  function TaskEditor({ onEdit }: TaskEditorProps) {
+    const [title, setTitle] = useState("");
+    const [description, setDescription] = useState("");
+    const [status, setStatus] = useState<Task["status"]>(TASK_STATUS.TODO);
+
+    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+
+      await onEdit({
+        title,
+        description,
+        status,
+      });
+
+      setTitle("");
+      setDescription("");
+      setStatus(TASK_STATUS.TODO);
+    };
+
+    return (
       <dialog ref={dialogRef} className="task-dialog">
         <form className={"task-dialog__form"} method="dialog" onSubmit={handleSubmit}>
           <h3 className={"task-dialog__title"}>Register Task</h3>
@@ -161,9 +197,11 @@ function Tasks({ tasks, onRegister, onDelete }: TaskProps) {
                 value={status}
                 onChange={(e) => setStatus(Number(e.target.value) as Task["status"])}
               >
-                <option value={TASK_STATUS.TODO}>ToDo</option>
-                <option value={TASK_STATUS.DOING}>Doing</option>
-                <option value={TASK_STATUS.DONE}>Done</option>
+                {Object.entries(taskStatusMap).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
               </select>
             </label>
           </div>
@@ -175,15 +213,17 @@ function Tasks({ tasks, onRegister, onDelete }: TaskProps) {
             <button
               className={"task-dialog__button task-dialog__button--secondary"}
               type="button"
-              onClick={() => closeDialog()}
+              onClick={() => close()}
             >
               Cancel
             </button>
           </menu>
         </form>
       </dialog>
-    </>
-  );
+    );
+  }
+
+  return { open, close, TaskEditor };
 }
 
 async function listTasks(): Promise<Task[]> {
