@@ -80,6 +80,20 @@
   text-align: center;
 }
 
+.tasks__body-cell-actions {
+  display: flex;
+  column-gap: 8px;
+}
+
+.tasks__body-cell-edit {
+  padding: 8px 16px;
+  background-color: #646cff;
+
+  &:hover {
+    border-color: transparent;
+  }
+}
+
 .tasks__body-cell-delete {
   padding: 8px 16px;
   background-color: darkred;

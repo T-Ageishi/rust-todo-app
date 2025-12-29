@@ -20,15 +20,32 @@ type TaskProps = {
     description: Task["description"];
     status: Task["status"];
   }) => Promise<void>;
-  onDelete: (id: Task["id"]) => Promise<void>;
-};
-
-type TaskEditorProps = {
-  onEdit: (source: {
+  onUpdate: (source: {
+    id: Task["id"];
     title: Task["title"];
     description: Task["description"];
     status: Task["status"];
   }) => Promise<void>;
+  onDelete: (id: Task["id"]) => Promise<void>;
+};
+
+type TaskEditorSubmitSource =
+  | {
+      mode: "register";
+      title: Task["title"];
+      description: Task["description"];
+      status: Task["status"];
+    }
+  | {
+      mode: "update";
+      id: Task["id"];
+      title: Task["title"];
+      description: Task["description"];
+      status: Task["status"];
+    };
+
+type TaskEditorProps = {
+  onEdit: (source: TaskEditorSubmitSource) => Promise<void>;
 };
 
 const taskStatusMap = {
@@ -51,9 +68,27 @@ function App() {
     description: Task["description"];
     status: Task["status"];
   }) => {
-    console.log(source);
     const task = await registerTask(source);
     setTasks([task, ...tasks]);
+  };
+
+  const handleUpdateTask = async (source: {
+    id: Task["id"];
+    title: Task["title"];
+    description: Task["description"];
+    status: Task["status"];
+  }) => {
+    const task = await updateTask(source);
+    setTasks(() =>
+      tasks.reduce<Task[]>((acc, t) => {
+        if (t.id === task.id) {
+          acc.push(task);
+        } else {
+          acc.push(t);
+        }
+        return acc;
+      }, []),
+    );
   };
 
   const handleDeleteTask = async (id: Task["id"]) => {
@@ -65,28 +100,34 @@ function App() {
 
   return (
     <main>
-      <Tasks tasks={tasks} onRegister={handleRegisterTask} onDelete={handleDeleteTask} />
+      <Tasks
+        tasks={tasks}
+        onRegister={handleRegisterTask}
+        onUpdate={handleUpdateTask}
+        onDelete={handleDeleteTask}
+      />
     </main>
   );
 }
 
-function Tasks({ tasks, onRegister, onDelete }: TaskProps) {
+function Tasks({ tasks, onRegister, onUpdate, onDelete }: TaskProps) {
   const { open, close, TaskEditor } = useTaskEditor();
 
-  const handleEdit = async ({
-    title,
-    description,
-    status,
-  }: {
-    title: Task["title"];
-    description: Task["description"];
-    status: Task["status"];
-  }) => {
-    await onRegister({
-      title,
-      description,
-      status,
-    });
+  const handleEdit = async (source: TaskEditorSubmitSource) => {
+    if (source.mode === "register") {
+      await onRegister({
+        title: source.title,
+        description: source.description,
+        status: source.status,
+      });
+    } else if (source.mode === "update") {
+      await onUpdate({
+        id: source.id,
+        title: source.title,
+        description: source.description,
+        status: source.status,
+      });
+    }
 
     close();
   };
@@ -94,7 +135,7 @@ function Tasks({ tasks, onRegister, onDelete }: TaskProps) {
   return (
     <>
       <div className={"tasks-actions"}>
-        <button onClick={() => open()} className={"tasks-actions__register"}>
+        <button onClick={() => open({ type: "register" })} className={"tasks-actions__register"}>
           <span className={"tasks-actions__register-icon"}>+</span>Register
         </button>
       </div>
@@ -109,18 +150,24 @@ function Tasks({ tasks, onRegister, onDelete }: TaskProps) {
           </tr>
         </thead>
         <tbody>
-          {tasks.map((task) => (
-            <tr key={task.id}>
-              <td className={"tasks__cell tasks__body-cell"}>{task.id}</td>
-              <td className={"tasks__cell tasks__body-cell"}>{task.title}</td>
-              <td className={"tasks__cell tasks__body-cell"}>{task.description}</td>
-              <td className={"tasks__cell tasks__body-cell-status"}>
-                {taskStatusMap[task.status]}
-              </td>
+          {tasks.map(({ id, title, description, status }) => (
+            <tr key={id}>
+              <td className={"tasks__cell tasks__body-cell"}>{id}</td>
+              <td className={"tasks__cell tasks__body-cell"}>{title}</td>
+              <td className={"tasks__cell tasks__body-cell"}>{description}</td>
+              <td className={"tasks__cell tasks__body-cell-status"}>{taskStatusMap[status]}</td>
               <td className={"tasks__cell"}>
-                <button onClick={() => onDelete(task.id)} className={"tasks__body-cell-delete"}>
-                  Delete
-                </button>
+                <div className={"tasks__body-cell-actions"}>
+                  <button
+                    onClick={() => open({ type: "update", id, title, description, status })}
+                    className={"tasks__body-cell-edit"}
+                  >
+                    Edit
+                  </button>
+                  <button onClick={() => onDelete(id)} className={"tasks__body-cell-delete"}>
+                    Delete
+                  </button>
+                </div>
               </td>
             </tr>
           ))}
@@ -133,28 +180,86 @@ function Tasks({ tasks, onRegister, onDelete }: TaskProps) {
 
 function useTaskEditor() {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const modeRef = useRef<"register" | "update">("register");
+  const initialValueRef = useRef<{
+    id: Task["id"];
+    title: Task["title"];
+    description: Task["description"];
+    status: Task["status"];
+  }>({ id: "", title: "", description: "", status: TASK_STATUS.TODO });
 
-  function open() {
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  function open(
+    source:
+      | { type: "register" }
+      | {
+          type: "update";
+          id: Task["id"];
+          title: Task["title"];
+          description: Task["description"];
+          status: Task["status"];
+        },
+  ) {
+    if (source.type === "register") {
+      modeRef.current = "register";
+      initialValueRef.current = {
+        id: "",
+        title: "",
+        description: "",
+        status: TASK_STATUS.TODO,
+      };
+    } else if (source.type === "update") {
+      modeRef.current = "update";
+      initialValueRef.current = {
+        id: source.id,
+        title: source.title,
+        description: source.description,
+        status: source.status,
+      };
+    }
+
+    setDialogOpen(true);
     dialogRef.current?.showModal();
   }
 
   function close() {
+    setDialogOpen(false);
     dialogRef.current?.close();
   }
 
   function TaskEditor({ onEdit }: TaskEditorProps) {
-    const [title, setTitle] = useState("");
-    const [description, setDescription] = useState("");
+    const [title, setTitle] = useState<Task["title"]>(initialValueRef.current.title);
+    const [description, setDescription] = useState<Task["description"]>("");
     const [status, setStatus] = useState<Task["status"]>(TASK_STATUS.TODO);
+
+    useEffect(() => {
+      if (!dialogOpen) return;
+
+      setTitle(initialValueRef.current.title);
+      setDescription(initialValueRef.current.description);
+      setStatus(initialValueRef.current.status);
+    }, [
+      dialogOpen,
+      initialValueRef.current.title,
+      initialValueRef.current.description,
+      initialValueRef.current.status,
+    ]);
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault();
 
-      await onEdit({
-        title,
-        description,
-        status,
-      });
+      if (modeRef.current === "register") {
+        await onEdit({ mode: modeRef.current, title, description, status });
+      } else if (modeRef.current === "update") {
+        await onEdit({
+          mode: modeRef.current,
+          id: initialValueRef.current.id,
+          title,
+          description,
+          status,
+        });
+      }
 
       setTitle("");
       setDescription("");
@@ -253,6 +358,41 @@ async function registerTask({
       description,
       status,
     }),
+  });
+
+  const json = await res.json();
+  return json.data as Task;
+}
+
+async function updateTask({
+  id,
+  title,
+  description,
+  status,
+}: {
+  id: Task["id"];
+  title: Task["title"];
+  description: Task["description"];
+  status: Task["status"];
+}): Promise<Task> {
+  const payload: {
+    id: Task["id"];
+    title?: Task["title"];
+    description?: Task["description"];
+    status: Task["status"];
+  } = { id, status };
+  if (title !== "") {
+    payload.title = title;
+  }
+  if (description !== "") {
+    payload.description = description;
+  }
+  const res = await fetch("/api/v1/tasks", {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
   });
 
   const json = await res.json();
