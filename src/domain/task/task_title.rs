@@ -36,26 +36,31 @@ impl TaskTitle {
     }
 }
 
-#[test]
-fn try_from_when_valid_value_then_returns_instance() {
-    let value = String::from("Task Title");
-    let task_title = TaskTitle::try_from(value.as_str()).unwrap();
-    assert_eq!(task_title.value, "Task Title");
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    let value = String::from("A").repeat(TASK_TITLE_MAX_LENGTH);
-    let task_title = TaskTitle::try_from(value.as_str()).unwrap();
-    assert_eq!(task_title.value, value);
-}
+    #[test]
+    fn try_from_when_valid_value_then_returns_instance() {
+        let value = String::from("Task Title");
+        let task_title = TaskTitle::try_from(value.as_str()).unwrap();
+        assert_eq!(task_title.value, "Task Title");
 
-#[test]
-fn try_from_when_value_is_empty_then_returns_error() {
-    let err = TaskTitle::try_from("").unwrap_err();
-    assert_eq!(err, TaskTitleParseError::Empty);
-}
+        let value = String::from("A").repeat(TASK_TITLE_MAX_LENGTH);
+        let task_title = TaskTitle::try_from(value.as_str()).unwrap();
+        assert_eq!(task_title.value, value);
+    }
 
-#[test]
-fn try_from_when_value_is_too_long_then_returns_error() {
-    let value = String::from("A").repeat(TASK_TITLE_MAX_LENGTH + 1);
-    let err = TaskTitle::try_from(value.as_str()).unwrap_err();
-    assert_eq!(err, TaskTitleParseError::TooLong);
+    #[test]
+    fn try_from_when_value_is_empty_then_returns_error() {
+        let err = TaskTitle::try_from("").unwrap_err();
+        assert_eq!(err, TaskTitleParseError::Empty);
+    }
+
+    #[test]
+    fn try_from_when_value_is_too_long_then_returns_error() {
+        let value = String::from("A").repeat(TASK_TITLE_MAX_LENGTH + 1);
+        let err = TaskTitle::try_from(value.as_str()).unwrap_err();
+        assert_eq!(err, TaskTitleParseError::TooLong);
+    }
 }
