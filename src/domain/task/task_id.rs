@@ -39,15 +39,21 @@ impl TaskId {
     }
 }
 
-#[test]
-fn try_from_when_valid_uuid_then_returns_instance() {
-    let uuid = Uuid::new_v4();
-    let task_id = TaskId::from(uuid);
-    assert_eq!(task_id.value, uuid);
-}
-#[test]
-fn try_from_when_invalid_uuid_then_returns_error() {
-    let uuid = "sample-invalid-uuid";
-    let task_id = TaskId::try_from(uuid.to_string().as_str());
-    assert!(task_id.is_err());
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn try_from_when_valid_uuid_then_returns_instance() {
+        let uuid = Uuid::new_v4();
+        let task_id = TaskId::from(uuid);
+        assert_eq!(task_id.value, uuid);
+    }
+
+    #[test]
+    fn try_from_when_invalid_uuid_then_returns_error() {
+        let uuid = "sample-invalid-uuid";
+        let task_id = TaskId::try_from(uuid.to_string().as_str());
+        assert!(task_id.is_err());
+    }
 }
