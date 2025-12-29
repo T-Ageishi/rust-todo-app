@@ -1,3 +1,11 @@
 [tools]
 node = "24"
 rust = "stable"
+
+[tasks.start-api]
+dir = "api-server"
+run = "cargo run"
+
+[tasks.start-client]
+dir = "web-client"
+run = "pnpm run dev"
