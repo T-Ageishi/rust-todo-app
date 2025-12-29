@@ -1,1 +1,2 @@
+cd web-client
 pnpm lint-staged --concurrent false
