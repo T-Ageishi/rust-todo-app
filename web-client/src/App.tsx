@@ -15,6 +15,7 @@ type Task = {
 };
 type TaskProps = {
   tasks: Task[];
+  onDelete: (id: Task["id"]) => Promise<void>;
 };
 
 function App() {
@@ -26,14 +27,21 @@ function App() {
     })();
   }, []);
 
+  const handleDeleteTask = async (id: Task["id"]) => {
+    const result = await deleteTask(id);
+    if (result) {
+      setTasks(() => tasks.filter((t) => t.id !== id));
+    }
+  };
+
   return (
     <main>
-      <Tasks tasks={tasks} />
+      <Tasks tasks={tasks} onDelete={handleDeleteTask} />
     </main>
   );
 }
 
-function Tasks({ tasks }: TaskProps) {
+function Tasks({ tasks, onDelete }: TaskProps) {
   const taskStatusMap = {
     [TASK_STATUS.TODO]: "ToDo",
     [TASK_STATUS.DOING]: "Doing",
@@ -48,6 +56,7 @@ function Tasks({ tasks }: TaskProps) {
           <td className={"tasks__cell tasks__header-cell"}>Title</td>
           <td className={"tasks__cell tasks__header-cell"}>Description</td>
           <td className={"tasks__cell tasks__header-cell"}>Status</td>
+          <td className={"tasks__cell tasks__header-cell"}></td>
         </tr>
       </thead>
       <tbody>
@@ -57,6 +66,11 @@ function Tasks({ tasks }: TaskProps) {
             <td className={"tasks__cell tasks__body-cell"}>{task.title}</td>
             <td className={"tasks__cell tasks__body-cell"}>{task.description}</td>
             <td className={"tasks__cell tasks__body-cell-status"}>{taskStatusMap[task.status]}</td>
+            <td className={"tasks__cell"}>
+              <button onClick={() => onDelete(task.id)} className={"tasks__body-cell-delete"}>
+                Delete
+              </button>
+            </td>
           </tr>
         ))}
       </tbody>
@@ -70,6 +84,20 @@ async function fetchTasks(): Promise<Task[]> {
   });
   const json = await res.json();
   return json.data;
+}
+
+async function deleteTask(id: Task["id"]) {
+  const res = await fetch("/api/v1/tasks", {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      id,
+    }),
+  });
+
+  return res.status === 200;
 }
 
 export default App;

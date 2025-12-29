@@ -59,3 +59,12 @@
 .tasks__body-cell-status {
   text-align: center;
 }
+
+.tasks__body-cell-delete {
+  padding: 8px 16px;
+  background-color: darkred;
+
+  &:hover {
+    border-color: transparent;
+  }
+}
