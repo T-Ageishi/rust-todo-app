@@ -4,12 +4,8 @@ use crate::domain::task::task_id::TaskId;
 use crate::domain::task::task_repository::TaskRepository;
 use crate::domain::task::task_status::TaskStatus;
 use crate::domain::task::task_title::TaskTitle;
-#[cfg(test)]
-use crate::repositories::task::task_in_memory_repository::TaskInMemoryRepository;
 use crate::use_cases::task::update_task_command::UpdateTaskCommand;
 use crate::use_cases::task::update_task_result::UpdateTaskResult;
-#[cfg(test)]
-use uuid::Uuid;
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum UpdateTaskError {
@@ -75,98 +71,105 @@ impl<'a, T: TaskRepository> UpdateTask<'a, T> {
     }
 }
 
-#[test]
-fn execute_when_valid_input_then_returns_result() {
-    let mut repository = TaskInMemoryRepository::new();
-    let ids = repository.register_test_data();
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::repositories::task::task_in_memory_repository::TaskInMemoryRepository;
+    use uuid::Uuid;
 
-    let mut update_task = UpdateTask {
-        repository: &mut repository,
-    };
-    let command = UpdateTaskCommand::new(
-        ids.get(0).unwrap().to_string().as_str(),
-        Some(String::from("New Task Title").as_str()),
-        Some(String::from("New Task Description").as_str()),
-        Some(2),
-    )
+    #[test]
+    fn execute_when_valid_input_then_returns_result() {
+        let mut repository = TaskInMemoryRepository::new();
+        let ids = repository.register_test_data();
+
+        let mut update_task = UpdateTask {
+            repository: &mut repository,
+        };
+        let command = UpdateTaskCommand::new(
+            ids.get(0).unwrap().to_string().as_str(),
+            Some(String::from("New Task Title").as_str()),
+            Some(String::from("New Task Description").as_str()),
+            Some(2),
+        )
         .unwrap();
-    let result = update_task.execute(command).ok().unwrap();
-    assert_eq!(result.id, ids.get(0).unwrap().to_string());
-    assert_eq!(result.title, String::from("New Task Title"));
-    assert_eq!(result.description, String::from("New Task Description"));
-    assert_eq!(result.status, 2);
-}
+        let result = update_task.execute(command).ok().unwrap();
+        assert_eq!(result.id, ids.get(0).unwrap().to_string());
+        assert_eq!(result.title, String::from("New Task Title"));
+        assert_eq!(result.description, String::from("New Task Description"));
+        assert_eq!(result.status, 2);
+    }
 
-#[test]
-fn execute_when_invalid_task_title_then_returns_error() {
-    let mut repository = TaskInMemoryRepository::new();
-    let ids = repository.register_test_data();
+    #[test]
+    fn execute_when_invalid_task_title_then_returns_error() {
+        let mut repository = TaskInMemoryRepository::new();
+        let ids = repository.register_test_data();
 
-    let mut update_task = UpdateTask {
-        repository: &mut repository,
-    };
-    let command = UpdateTaskCommand::new(
-        ids.get(0).unwrap().to_string().as_str(),
-        Some(String::from("").as_str()),
-        Some(String::from("New Task Description").as_str()),
-        Some(2),
-    )
+        let mut update_task = UpdateTask {
+            repository: &mut repository,
+        };
+        let command = UpdateTaskCommand::new(
+            ids.get(0).unwrap().to_string().as_str(),
+            Some(String::from("").as_str()),
+            Some(String::from("New Task Description").as_str()),
+            Some(2),
+        )
         .unwrap();
-    let result = update_task.execute(command).err().unwrap();
-    assert_eq!(result, UpdateTaskError::InvalidTitle);
-}
+        let result = update_task.execute(command).err().unwrap();
+        assert_eq!(result, UpdateTaskError::InvalidTitle);
+    }
 
-#[test]
-fn execute_when_invalid_task_description_then_returns_error() {
-    let mut repository = TaskInMemoryRepository::new();
-    let ids = repository.register_test_data();
+    #[test]
+    fn execute_when_invalid_task_description_then_returns_error() {
+        let mut repository = TaskInMemoryRepository::new();
+        let ids = repository.register_test_data();
 
-    let mut update_task = UpdateTask {
-        repository: &mut repository,
-    };
-    let command = UpdateTaskCommand::new(
-        ids.get(0).unwrap().to_string().as_str(),
-        Some(String::from("New Task Title").as_str()),
-        Some(String::from("").as_str()),
-        Some(2),
-    )
+        let mut update_task = UpdateTask {
+            repository: &mut repository,
+        };
+        let command = UpdateTaskCommand::new(
+            ids.get(0).unwrap().to_string().as_str(),
+            Some(String::from("New Task Title").as_str()),
+            Some(String::from("").as_str()),
+            Some(2),
+        )
         .unwrap();
-    let result = update_task.execute(command).err().unwrap();
-    assert_eq!(result, UpdateTaskError::InvalidDescription);
-}
+        let result = update_task.execute(command).err().unwrap();
+        assert_eq!(result, UpdateTaskError::InvalidDescription);
+    }
 
-#[test]
-fn execute_when_invalid_task_status_then_returns_error() {
-    let mut repository = TaskInMemoryRepository::new();
-    let ids = repository.register_test_data();
+    #[test]
+    fn execute_when_invalid_task_status_then_returns_error() {
+        let mut repository = TaskInMemoryRepository::new();
+        let ids = repository.register_test_data();
 
-    let mut update_task = UpdateTask {
-        repository: &mut repository,
-    };
-    let command = UpdateTaskCommand::new(
-        ids.get(0).unwrap().to_string().as_str(),
-        Some(String::from("New Task Title").as_str()),
-        Some(String::from("New Task Description").as_str()),
-        Some(4),
-    )
+        let mut update_task = UpdateTask {
+            repository: &mut repository,
+        };
+        let command = UpdateTaskCommand::new(
+            ids.get(0).unwrap().to_string().as_str(),
+            Some(String::from("New Task Title").as_str()),
+            Some(String::from("New Task Description").as_str()),
+            Some(4),
+        )
         .unwrap();
-    let result = update_task.execute(command).err().unwrap();
-    assert_eq!(result, UpdateTaskError::InvalidStatus);
-}
+        let result = update_task.execute(command).err().unwrap();
+        assert_eq!(result, UpdateTaskError::InvalidStatus);
+    }
 
-#[test]
-fn execute_when_task_not_found_then_returns_error() {
-    let mut repository = TaskInMemoryRepository::new();
-    let mut update_task = UpdateTask {
-        repository: &mut repository,
-    };
-    let command = UpdateTaskCommand::new(
-        Uuid::new_v4().to_string().as_str(),
-        Some(String::from("New Task Title").as_str()),
-        Some(String::from("New Task Description").as_str()),
-        Some(4),
-    )
+    #[test]
+    fn execute_when_task_not_found_then_returns_error() {
+        let mut repository = TaskInMemoryRepository::new();
+        let mut update_task = UpdateTask {
+            repository: &mut repository,
+        };
+        let command = UpdateTaskCommand::new(
+            Uuid::new_v4().to_string().as_str(),
+            Some(String::from("New Task Title").as_str()),
+            Some(String::from("New Task Description").as_str()),
+            Some(4),
+        )
         .unwrap();
-    let result = update_task.execute(command).err().unwrap();
-    assert_eq!(result, UpdateTaskError::TaskNotFound);
+        let result = update_task.execute(command).err().unwrap();
+        assert_eq!(result, UpdateTaskError::TaskNotFound);
+    }
 }
