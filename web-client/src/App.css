@@ -11,9 +11,11 @@
   will-change: filter;
   transition: filter 300ms;
 }
+
 .logo:hover {
   filter: drop-shadow(0 0 2em #646cffaa);
 }
+
 .logo.react:hover {
   filter: drop-shadow(0 0 2em #61dafbaa);
 }
@@ -39,4 +41,21 @@
 
 .read-the-docs {
   color: #888;
+}
+
+.tasks__cell {
+  padding: 16px;
+}
+
+.tasks__header-cell {
+  text-align: left;
+  font-weight: bold;
+}
+
+.tasks__body-cell {
+  text-align: left;
+}
+
+.tasks__body-cell-status {
+  text-align: center;
 }
