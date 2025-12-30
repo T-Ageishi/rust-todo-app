@@ -8,8 +8,8 @@ import {
   type TaskStatus,
   taskStatusMap,
   type TaskUpdatePayload,
-} from "./task/define.ts";
-import { deleteTask, listTasks, registerTask, updateTask } from "./task/api.ts";
+} from "./define.ts";
+import { deleteTask, listTasks, registerTask, updateTask } from "./api.ts";
 
 export default function TaskList() {
   const [tasks, setTasks] = useState<Task[]>([]);
