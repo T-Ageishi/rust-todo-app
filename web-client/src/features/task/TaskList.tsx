@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   type Task,
   type TaskCreatePayload,
@@ -13,37 +13,37 @@ export default function TaskList() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const { open, close, TaskEditor } = useTaskEditor();
 
+  const handleRegisterTask = useCallback(async (payload: TaskCreatePayload) => {
+    const task = await registerTask(payload);
+    setTasks((prev) => [task, ...prev]);
+  }, []);
+  const handleUpdateTask = useCallback(async (payload: TaskUpdatePayload) => {
+    const task = await updateTask(payload);
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? task : t)));
+  }, []);
+  const handleDeleteTask = useCallback(async (id: Task["id"]) => {
+    const result = await deleteTask(id);
+    if (result) {
+      setTasks((prev) => prev.filter((t) => t.id !== id));
+    }
+  }, []);
+  const handleEdit = useCallback(
+    async (source: TaskEditorSubmitSource) => {
+      if (source.mode === "register") {
+        await handleRegisterTask(source.payload);
+      } else {
+        await handleUpdateTask(source.payload);
+      }
+      close();
+    },
+    [close],
+  );
+
   useEffect(() => {
     (async () => {
       setTasks(await listTasks());
     })();
   }, []);
-
-  const handleRegisterTask = async (payload: TaskCreatePayload) => {
-    const task = await registerTask(payload);
-    setTasks((prev) => [task, ...prev]);
-  };
-
-  const handleUpdateTask = async (payload: TaskUpdatePayload) => {
-    const task = await updateTask(payload);
-    setTasks((prev) => prev.map((t) => (t.id === task.id ? task : t)));
-  };
-
-  const handleDeleteTask = async (id: Task["id"]) => {
-    const result = await deleteTask(id);
-    if (result) {
-      setTasks((prev) => prev.filter((t) => t.id !== id));
-    }
-  };
-
-  const handleEdit = async (source: TaskEditorSubmitSource) => {
-    if (source.mode === "register") {
-      await handleRegisterTask(source.payload);
-    } else {
-      await handleUpdateTask(source.payload);
-    }
-    close();
-  };
 
   return (
     <>
