@@ -28,13 +28,6 @@ export type TaskEditorProps = {
   onEdit: (source: TaskEditorSubmitSource) => Promise<void>;
 };
 
-export type TaskProps = {
-  tasks: Task[];
-  onRegister: (payload: TaskCreatePayload) => Promise<void>;
-  onUpdate: (payload: TaskUpdatePayload) => Promise<void>;
-  onDelete: (id: Task["id"]) => Promise<void>;
-};
-
 export const TASK_STATUS = {
   TODO: 1,
   DOING: 2,
