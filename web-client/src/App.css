@@ -153,9 +153,8 @@
 }
 
 .task-dialog__label {
-  font-size: 12px;
-  font-weight: 500;
   color: rgba(255, 255, 255, 0.65);
+  text-align: left;
 }
 
 /* 入力系 */
