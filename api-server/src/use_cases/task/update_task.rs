@@ -65,7 +65,7 @@ impl<'a, T: TaskRepository> UpdateTask<'a, T> {
         }
 
         match self.repository.update(task) {
-            Ok(task) => Ok(UpdateTaskResult::from(task)),
+            Ok(task) => Ok(UpdateTaskResult::from(&task)),
             Err(_) => Err(UpdateTaskError::TaskNotFound),
         }
     }

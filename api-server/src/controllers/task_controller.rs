@@ -54,7 +54,7 @@ struct TaskDeleteOutput {
 }
 
 impl TaskListOutput {
-    fn from(task_list: &Vec<&Task>) -> Self {
+    fn from(task_list: &Vec<Task>) -> Self {
         let mut list = Vec::new();
         for task in task_list {
             list.push(TaskDTO {
@@ -80,7 +80,13 @@ impl<'a, T: TaskRepository> TaskController<'a, T> {
     }
 
     pub fn get(&self) -> Response<std::io::Cursor<Vec<u8>>> {
-        let tasks = self.repository.list();
+        let tasks = match self.repository.list() {
+            Ok(tasks) => tasks,
+            Err(_) => {
+                return Response::from_string(String::from("Error occurred during saving task"))
+                    .with_status_code(StatusCode::from(500));
+            }
+        };
         let task_list_output = TaskListOutput::from(&tasks);
         let json = serde_json::to_string(&task_list_output).unwrap();
 

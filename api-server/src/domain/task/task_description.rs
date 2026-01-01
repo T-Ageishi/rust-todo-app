@@ -6,7 +6,7 @@ pub enum TaskDescriptionParseError {
     TooLong,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TaskDescription {
     value: String,
 }

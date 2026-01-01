@@ -8,12 +8,14 @@ GRANT
     SELECT,
         INSERT,
         UPDATE,
-        DELETE
+        DELETE,
+        USAGE
         ON app_db.*
     TO 'app_user_role';
 
 -- Crate user
-GRANT 'app_user_role' TO 'app_user';
+GRANT `app_user_role` TO 'app_user'@'%';
+SET DEFAULT ROLE app_user_role TO 'app_user'@'%';
 
 -- Create tables
 CREATE TABLE IF NOT EXISTS tasks

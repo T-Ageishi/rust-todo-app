@@ -3,7 +3,7 @@ pub enum StatusParseError {
     InvalidStatus,
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum TaskStatus {
     Todo = 1,
     Doing = 2,

@@ -1,5 +1,6 @@
 use crate::controllers::task_controller::TaskController;
-use crate::repositories::task::task_in_memory_repository::TaskInMemoryRepository;
+use crate::repositories::app_db::AppDb;
+use crate::repositories::task::task_mysql_repository::TaskMysqlRepository;
 use std::env;
 use tiny_http::{Method, Response};
 
@@ -18,7 +19,8 @@ impl Server {
 
         println!("Listening for requests at http://{}", server.server_addr());
 
-        let mut repository = TaskInMemoryRepository::new();
+        let app_db = AppDb::init();
+        let mut repository = TaskMysqlRepository::new(&app_db);
 
         loop {
             let mut request = match server.recv() {

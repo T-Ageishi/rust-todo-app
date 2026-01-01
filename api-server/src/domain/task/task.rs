@@ -3,6 +3,7 @@ use crate::domain::task::task_id::TaskId;
 use crate::domain::task::task_status::TaskStatus;
 use crate::domain::task::task_title::TaskTitle;
 
+#[derive(Clone)]
 pub struct Task {
     pub id: TaskId,
     pub title: TaskTitle,
@@ -26,10 +27,7 @@ impl Task {
     }
 
     pub fn change_title(self, title: TaskTitle) -> Self {
-        Self {
-            title,
-            ..self
-        }
+        Self { title, ..self }
     }
 
     pub fn change_description(self, description: TaskDescription) -> Self {
@@ -40,9 +38,6 @@ impl Task {
     }
 
     pub fn change_status(self, status: TaskStatus) -> Self {
-        Self {
-            status,
-            ..self
-        }
+        Self { status, ..self }
     }
 }

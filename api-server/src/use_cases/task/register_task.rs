@@ -49,7 +49,7 @@ impl<'a, T: TaskRepository> RegisterTask<'a, T> {
             Err(_) => return Err(RegisterTaskError::RepositoryError),
         };
 
-        Ok(RegisterTaskResult::from(task))
+        Ok(RegisterTaskResult::from(&task))
     }
 }
 

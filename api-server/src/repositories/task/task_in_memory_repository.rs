@@ -1,70 +1,64 @@
 use crate::domain::task::task::Task;
-#[cfg(test)]
 use crate::domain::task::task_description::TaskDescription;
 use crate::domain::task::task_id::TaskId;
 use crate::domain::task::task_repository::{TaskRepository, TaskRepositoryError};
-#[cfg(test)]
 use crate::domain::task::task_status::TaskStatus;
-#[cfg(test)]
 use crate::domain::task::task_title::TaskTitle;
+use std::cell::RefCell;
 use std::collections::HashMap;
 
 pub struct TaskInMemoryRepository {
-    data: HashMap<TaskId, Task>,
+    data: RefCell<HashMap<TaskId, Task>>,
 }
 
 impl TaskInMemoryRepository {
     pub fn new() -> Self {
         Self {
-            data: HashMap::new(),
+            data: RefCell::new(HashMap::new()),
         }
     }
 }
 
 impl TaskRepository for TaskInMemoryRepository {
-    fn list(&self) -> Vec<&Task> {
-        self.data.values().collect()
+    fn list(&self) -> Result<Vec<Task>, TaskRepositoryError> {
+        Ok(self.data.borrow().values().cloned().collect())
     }
 
-    fn get_by_id(&self, id: &TaskId) -> Result<&Task, TaskRepositoryError> {
-        match self.data.get(&id) {
-            Some(task) => Ok(task),
-            None => Err(TaskRepositoryError::NotFound),
-        }
+    fn get_by_id(&self, id: &TaskId) -> Result<Task, TaskRepositoryError> {
+        self.data
+            .borrow()
+            .get(id)
+            .cloned()
+            .ok_or(TaskRepositoryError::NotFound)
     }
 
-    fn register(&mut self, task: Task) -> Result<&Task, TaskRepositoryError> {
-        let id = task.id.clone();
-        if !self.data.contains_key(&task.id) {
-            self.data.insert(task.id.clone(), task);
+    fn register(&self, task: Task) -> Result<Task, TaskRepositoryError> {
+        let mut data = self.data.borrow_mut();
+
+        if data.contains_key(&task.id) {
+            return Err(TaskRepositoryError::AlreadyExists);
         }
 
-        let task = match self.get_by_id(&id) {
-            Ok(task) => task,
-            Err(_) => return Err(TaskRepositoryError::NotFound),
-        };
-
+        data.insert(task.id.clone(), task.clone());
         Ok(task)
     }
 
-    fn update(&mut self, task: Task) -> Result<&Task, TaskRepositoryError> {
-        let id = task.id.clone();
-        if self.data.contains_key(&task.id) {
-            self.data.insert(task.id.clone(), task);
+    fn update(&self, task: Task) -> Result<Task, TaskRepositoryError> {
+        let mut data = self.data.borrow_mut();
+
+        if !data.contains_key(&task.id) {
+            return Err(TaskRepositoryError::NotFound);
         }
 
-        let task = match self.get_by_id(&id) {
-            Ok(task) => task,
-            Err(_) => return Err(TaskRepositoryError::NotFound),
-        };
-
+        data.insert(task.id.clone(), task.clone());
         Ok(task)
     }
 
-    fn delete(&mut self, task_id: &TaskId) {
-        if self.data.contains_key(task_id) {
-            self.data.remove(task_id);
-        }
+    fn delete(&self, task_id: &TaskId) -> Result<(), TaskRepositoryError> {
+        let mut data = self.data.borrow_mut();
+
+        data.remove(task_id).ok_or(TaskRepositoryError::NotFound)?;
+        Ok(())
     }
 }
 
@@ -73,16 +67,21 @@ impl TaskInMemoryRepository {
     pub fn register_test_data(&mut self) -> Vec<TaskId> {
         let mut ids = Vec::new();
         let data = [("AAA", "AAA"), ("BBB", "BBB"), ("CCC", "CCC")];
-        for d in data.iter() {
+
+        let mut map = self.data.borrow_mut();
+
+        for (title, description) in data {
             let task = Task::new(
                 TaskId::new(),
-                TaskTitle::try_from(d.0).unwrap(),
-                TaskDescription::try_from(d.1).unwrap(),
+                TaskTitle::try_from(title).unwrap(),
+                TaskDescription::try_from(description).unwrap(),
                 TaskStatus::Todo,
             );
+
             ids.push(task.id.clone());
-            self.data.insert(task.id.clone(), task);
+            map.insert(task.id.clone(), task);
         }
+
         ids
     }
 }
@@ -97,14 +96,14 @@ mod tests {
         repository.register_test_data();
 
         let list = repository.list();
-        assert_eq!(list.len(), 3);
+        assert_eq!(list.unwrap().len(), 3);
     }
 
     #[test]
     fn list_when_tasks_are_not_registered_then_returns_empty_list() {
         let repository = TaskInMemoryRepository::new();
         let list = repository.list();
-        assert_eq!(list.len(), 0);
+        assert_eq!(list.unwrap().len(), 0);
     }
 
     #[test]
@@ -151,9 +150,9 @@ mod tests {
         let ids = repository.register_test_data();
 
         let task_id = ids[0].clone();
-        repository.delete(&task_id);
+        let _ = repository.delete(&task_id);
 
         let list = repository.list();
-        assert_eq!(list.len(), 2);
+        assert_eq!(list.unwrap().len(), 2);
     }
 }

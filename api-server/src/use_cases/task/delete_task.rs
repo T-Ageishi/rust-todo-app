@@ -13,7 +13,7 @@ impl<'a, T: TaskRepository> DeleteTask<'a, T> {
 
     pub fn execute(&mut self, command: DeleteTaskCommand) -> Result<(), ()> {
         let id = TaskId::from(command.id);
-        self.repository.delete(&id);
+        let _ = self.repository.delete(&id);
 
         Ok(())
     }
