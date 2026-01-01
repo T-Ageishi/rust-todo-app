@@ -1,5 +1,6 @@
 use crate::controllers::task_controller::TaskController;
 use crate::repositories::task::task_in_memory_repository::TaskInMemoryRepository;
+use std::env;
 use tiny_http::{Method, Response};
 
 pub struct Server {
@@ -12,7 +13,10 @@ impl Server {
     }
 
     pub fn start(&self) {
-        let server = tiny_http::Server::http("127.0.0.1:8080").unwrap();
+        let addr = env::var("SERVER_ADDR").unwrap_or_else(|_| "127.0.0.1".to_string());
+        let server = tiny_http::Server::http(format!("{}:8080", addr)).unwrap();
+
+        println!("Listening for requests at http://{}", server.server_addr());
 
         let mut repository = TaskInMemoryRepository::new();
 
