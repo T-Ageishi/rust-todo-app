@@ -1,8 +1,16 @@
 services:
-  api-server:
+  app-cargo:
+    image: app-cargo:latest
     build:
       context: .
-      dockerfile: settings/api-server/Dockerfile
+      dockerfile: settings/app-cargo/Dockerfile
+    profiles:
+      - image-only
+
+  api-server:
+    image: app-cargo:latest
+    volumes:
+      - ./api-server:/usr/src/origin
     ports:
       - "8080:8080"
     environment:
