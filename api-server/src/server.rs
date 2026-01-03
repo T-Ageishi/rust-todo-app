@@ -10,14 +10,16 @@ pub struct Server {
 }
 
 impl Server {
-    pub fn new() -> Self {
-        let config = ApplicationConfig::new();
-        let app_db = match AppDb::new(config.db_config()) {
+    pub fn new(application_config: ApplicationConfig) -> Self {
+        let app_db = match AppDb::new(application_config.db_config()) {
             Ok(app_db) => app_db,
             Err(e) => panic!("{}", e),
         };
 
-        Self { config, app_db }
+        Self {
+            config: application_config,
+            app_db,
+        }
     }
 
     pub fn start(&self) {

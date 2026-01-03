@@ -5,9 +5,8 @@ mod repositories;
 mod server;
 mod use_cases;
 
+use crate::application_config::ApplicationConfig;
 use server::Server;
-use std::thread::sleep;
-use std::time::Duration;
 
 fn main() {
     match dotenvy::dotenv() {
@@ -17,5 +16,5 @@ fn main() {
         }
     }
 
-    Server::new().start();
+    Server::new(ApplicationConfig::new()).start();
 }
