@@ -1,3 +1,4 @@
+use crate::application_config::DbConfig;
 use mysql::{Pool, PooledConn};
 use std::time::Duration;
 use std::{env, thread};
@@ -7,27 +8,17 @@ pub struct AppDb {
 }
 
 impl AppDb {
-    pub fn init() -> Self {
-        let user = env::var("MYSQL_USER").expect("MYSQL_USER not set");
-        let password = env::var("MYSQL_PASSWORD").expect("MYSQL_PASSWORD not set");
-        let host = env::var("DB_HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
-        let url = format!("mysql://{}:{}@{}:3306/app_db", user, password, host);
+    pub fn new(db_config: &DbConfig) -> Result<Self, mysql::Error> {
+        let url = db_config.database_url("app_db");
 
         let mut last_err = None;
         for attempt in 1..10 {
             match Pool::new(url.as_str()) {
-                Ok(pool) => match pool.get_conn() {
-                    Ok(_) => {
-                        println!("MySQL connected (attempt {})", attempt);
-                        return Self { pool };
-                    }
-                    Err(e) => {
-                        last_err = Some(e.to_string());
-                    }
-                },
-                Err(e) => {
-                    last_err = Some(e.to_string());
+                Ok(pool) => {
+                    println!("info: connected to DB (attempt {})", attempt);
+                    return Ok(AppDb { pool });
                 }
+                Err(e) => last_err = Some(e.to_string()),
             }
 
             let backoff_sec = 1 << attempt;
@@ -42,7 +33,7 @@ impl AppDb {
         }
 
         panic!(
-            "failed to connect to mysql after 10 attempts: {:?}",
+            "error: failed to connect to mysql after 10 attempts: {:?}",
             last_err
         );
     }

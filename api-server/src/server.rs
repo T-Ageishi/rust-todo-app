@@ -1,26 +1,40 @@
+use crate::application_config::ApplicationConfig;
 use crate::controllers::task_controller::TaskController;
 use crate::repositories::app_db::AppDb;
 use crate::repositories::task::task_mysql_repository::TaskMysqlRepository;
-use std::env;
 use tiny_http::{Method, Response};
 
 pub struct Server {
-    //
+    config: ApplicationConfig,
+    app_db: AppDb,
 }
 
 impl Server {
     pub fn new() -> Self {
-        Self {}
+        let config = ApplicationConfig::new();
+        let app_db = match AppDb::new(config.db_config()) {
+            Ok(app_db) => app_db,
+            Err(e) => panic!("{}", e),
+        };
+
+        Self { config, app_db }
     }
 
     pub fn start(&self) {
-        let addr = env::var("SERVER_ADDR").unwrap_or_else(|_| "127.0.0.1".to_string());
-        let server = tiny_http::Server::http(format!("{}:8080", addr)).unwrap();
+        let server = tiny_http::Server::http(format!(
+            "{}:{}",
+            self.config.server_config().addr(),
+            self.config.server_config().port()
+        ))
+        .unwrap();
 
-        println!("Listening for requests at http://{}", server.server_addr());
+        println!(
+            "Listening for requests at {}://{}",
+            self.config.server_config().scheme(),
+            server.server_addr()
+        );
 
-        let app_db = AppDb::init();
-        let mut repository = TaskMysqlRepository::new(&app_db);
+        let mut repository = TaskMysqlRepository::new(&self.app_db);
 
         loop {
             let mut request = match server.recv() {
