@@ -1,7 +1,7 @@
 use crate::application_config::DbConfig;
 use mysql::{Pool, PooledConn};
+use std::thread;
 use std::time::Duration;
-use std::{env, thread};
 
 pub struct AppDb {
     pool: Pool,
